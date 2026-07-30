@@ -388,6 +388,84 @@ TEST_F(TestTabview, DisableTabOutOfRange)
 	EXPECT_FALSE(tv.disableTab(5, true));
 }
 
+// ─── Tab lookup by id ───────────────────────────────────────────────────────
+
+TEST_F(TestTabview, GetTabIndexById)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	tv.addTab("First", "first");
+	tv.addTab("Second", "second");
+	tv.addTab("Third", "third");
+
+	EXPECT_EQ(tv.getTabIndexById("first"), 0u);
+	EXPECT_EQ(tv.getTabIndexById("second"), 1u);
+	EXPECT_EQ(tv.getTabIndexById("third"), 2u);
+}
+
+TEST_F(TestTabview, GetTabIndexByIdUnknownIdReturnsNullopt)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	tv.addTab("First", "first");
+
+	EXPECT_FALSE(tv.getTabIndexById("nonexistent").has_value());
+}
+
+TEST_F(TestTabview, GetTabIndexByIdWithoutIdReturnsNullopt)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	// Added without a stable id - only addressable by index.
+	tv.addTab("First");
+
+	EXPECT_FALSE(tv.getTabIndexById("first").has_value());
+	EXPECT_FALSE(tv.getTabIndexById("").has_value());
+}
+
+TEST_F(TestTabview, SetActiveTabById)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	tv.addTab("First", "first");
+	tv.addTab("Second", "second");
+
+	EXPECT_TRUE(tv.setActiveTabById("second"));
+	EXPECT_EQ(tv.getActiveTabIndex(), 1u);
+}
+
+TEST_F(TestTabview, SetActiveTabByIdUnknownIdReturnsFalseAndKeepsCurrentTab)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	tv.addTab("First", "first");
+	tv.addTab("Second", "second");
+
+	EXPECT_FALSE(tv.setActiveTabById("nonexistent"));
+	EXPECT_EQ(tv.getActiveTabIndex(), 0u);
+}
+
+TEST_F(TestTabview, DisableTabByIdDisablesActiveTabAndSwitches)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	tv.addTab("First", "first");
+	tv.addTab("Second", "second");
+
+	EXPECT_TRUE(tv.disableTabById("first", true));
+	EXPECT_EQ(tv.getActiveTabIndex(), 1u);
+	EXPECT_TRUE(tv.getTabButton(0)->hasState(LV_STATE_DISABLED));
+}
+
+TEST_F(TestTabview, DisableTabByIdUnknownIdReturnsFalse)
+{
+	TabView tv("tv", screen);
+	tv.setSize(LV_PCT(100), LV_PCT(100));
+	tv.addTab("First", "first");
+
+	EXPECT_FALSE(tv.disableTabById("nonexistent", true));
+}
+
 // ─── Tab bar position ───────────────────────────────────────────────────────
 
 TEST_F(TestTabview, TabBarTop)

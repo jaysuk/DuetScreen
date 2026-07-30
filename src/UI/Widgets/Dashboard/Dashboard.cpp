@@ -53,7 +53,7 @@ namespace UI
 	void Dashboard::disableJobsTab(bool disable)
 	{
 		ZoneScoped;
-		m_tabs.disableTab(0, disable);
+		m_tabs.disableTabById("jobs", disable);
 	}
 
 	void Dashboard::setNumberPad(ModalNumberPad* np)

@@ -28,8 +28,8 @@ namespace UI
 		FileView& getFileView() { return m_fileView; }
 		StatusView& getStatusView() { return m_statusView; }
 
-		void showJobsTab() { m_tabs.setActiveTab(0); }
-		void showStatusTab() { m_tabs.setActiveTab(2); }
+		void showJobsTab() { m_tabs.setActiveTabById("jobs"); }
+		void showStatusTab() { m_tabs.setActiveTabById("status"); }
 		void disableJobsTab(bool disable);
 
 		void setNumberPad(ModalNumberPad* np);
@@ -46,17 +46,17 @@ namespace UI
 		TabView m_tabs{"tabs", getRoot()};
 		FileView m_fileView{
 			"files",
-			m_tabs.addTab(_("file.jobs")),
+			m_tabs.addTab(_("file.jobs"), "jobs"),
 			FileView::StorageKeys{.sortBy = {"ui:dashboard:file:jobs:sort_by", OM::FileSystem::SortBy::DATE},
 								  .sortDescending = {"ui:dashboard:file:jobs:sort_descending", true},
 								  .displayMode = {"ui:dashboard:file:jobs:display_mode", FileView::DisplayMode::List}}};
 		FileView m_macroView{
 			"macros",
-			m_tabs.addTab(_("file.macros")),
+			m_tabs.addTab(_("file.macros"), "macros"),
 			FileView::StorageKeys{
 				.sortBy = {"ui:dashboard:file:macros:sort_by", OM::FileSystem::SortBy::NAME},
 				.sortDescending = {"ui:dashboard:file:macros:sort_descending", false},
 				.displayMode = {"ui:dashboard:file:macros:display_mode", FileView::DisplayMode::List}}};
-		StatusView m_statusView{"status", m_tabs.addTab(_("app_drawer.status"))};
+		StatusView m_statusView{"status", m_tabs.addTab(_("app_drawer.status"), "status")};
 	};
 } // namespace UI

@@ -68,12 +68,13 @@ namespace UI
 		m_tabContent.setStylePad(0);
 	}
 
-	LvContainer& TabView::addTab(std::string_view tab_name)
+	LvContainer& TabView::addTab(std::string_view tab_name, std::string_view id)
 	{
 		ZoneScoped;
 		UI_LOCK();
 		// Create new tab container
 		m_tabs.emplace_back(std::make_unique<LvContainer>(fmt::format("tab_{}", m_tabs.size()), m_tabContent));
+		m_tabIds.emplace_back(id);
 		LvContainer& new_tab = *m_tabs.back();
 
 		new_tab.addStyle(Themes::getLvglStyles().tab_card);
@@ -159,6 +160,55 @@ namespace UI
 			return nullptr;
 		}
 		return m_tabs.at(index).get();
+	}
+
+	std::optional<size_t> TabView::getTabIndexById(std::string_view id) const
+	{
+		ZoneScoped;
+		UI_LOCK();
+		if (id.empty())
+		{
+			return std::nullopt;
+		}
+
+		for (size_t i = 0; i < m_tabIds.size(); i++)
+		{
+			if (m_tabIds[i] == id)
+			{
+				return i;
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	bool TabView::setActiveTabById(std::string_view id)
+	{
+		ZoneScoped;
+		UI_LOCK();
+		std::optional<size_t> index = getTabIndexById(id);
+		if (!index)
+		{
+			LOG_ERROR("Tab id '{}' not found", id);
+			return false;
+		}
+
+		setActiveTab(*index);
+		return true;
+	}
+
+	bool TabView::disableTabById(std::string_view id, bool disable)
+	{
+		ZoneScoped;
+		UI_LOCK();
+		std::optional<size_t> index = getTabIndexById(id);
+		if (!index)
+		{
+			LOG_ERROR("Tab id '{}' not found", id);
+			return false;
+		}
+
+		return disableTab(*index, disable);
 	}
 
 	void TabView::setActiveTab(size_t index)
