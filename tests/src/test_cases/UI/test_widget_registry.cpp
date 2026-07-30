@@ -11,6 +11,24 @@
 
 using namespace UI::Layout;
 
+namespace
+{
+	// -Wmissing-field-initializers requires every field to be listed once any designated
+	// initializer is used, so tests that don't care about a field still have to name it.
+	WidgetDescriptor makeDescriptor(std::string_view id, std::function<bool()> available = nullptr)
+	{
+		return WidgetDescriptor{
+			.id = id,
+			.nameKey = {},
+			.icon = {},
+			.hint = {},
+			.singleton = false,
+			.create = nullptr,
+			.available = std::move(available),
+		};
+	}
+} // namespace
+
 // Each test constructs its own local WidgetRegistry rather than touching WidgetRegistry::get(),
 // so tests don't pollute the process-lifetime production singleton or each other.
 class TestWidgetRegistry : public TestSuite
@@ -26,7 +44,7 @@ TEST_F(TestWidgetRegistry, FindOnEmptyRegistryReturnsNullptr)
 TEST_F(TestWidgetRegistry, AddThenFindReturnsTheDescriptor)
 {
 	WidgetRegistry registry;
-	registry.add({.id = "widget_a"});
+	registry.add(makeDescriptor("widget_a"));
 
 	const WidgetDescriptor* found = registry.find("widget_a");
 	ASSERT_NE(found, nullptr);
@@ -36,7 +54,7 @@ TEST_F(TestWidgetRegistry, AddThenFindReturnsTheDescriptor)
 TEST_F(TestWidgetRegistry, FindUnknownIdReturnsNullptr)
 {
 	WidgetRegistry registry;
-	registry.add({.id = "widget_a"});
+	registry.add(makeDescriptor("widget_a"));
 
 	EXPECT_EQ(registry.find("widget_b"), nullptr);
 }
@@ -51,8 +69,15 @@ TEST_F(TestWidgetRegistry, FieldsRoundTripThroughAdd)
 		.icon = "a.png",
 		.hint = {.minCols = 2, .minRows = 3},
 		.singleton = true,
-		.create = [](const std::string&, LvObj&, const nlohmann::json&) -> std::unique_ptr<LvObj> { return nullptr; },
-		.available = [&availableCalled]() { availableCalled = true; return true; },
+		.create =
+			[](const std::string&, UI::LvObj&, const nlohmann::json&) -> std::unique_ptr<UI::LvObj>
+		{ return nullptr; },
+		.available =
+			[&availableCalled]()
+		{
+			availableCalled = true;
+			return true;
+		},
 	});
 
 	const WidgetDescriptor* found = registry.find("widget_a");
@@ -71,13 +96,13 @@ TEST_F(TestWidgetRegistry, PointersStayValidAfterFurtherAdds)
 {
 	// m_descriptors is a std::deque specifically so this holds even across many add() calls.
 	WidgetRegistry registry;
-	registry.add({.id = "widget_a"});
+	registry.add(makeDescriptor("widget_a"));
 	const WidgetDescriptor* first = registry.find("widget_a");
 	ASSERT_NE(first, nullptr);
 
 	for (int i = 0; i < 50; i++)
 	{
-		registry.add({.id = std::to_string(i)});
+		registry.add(makeDescriptor(std::to_string(i)));
 	}
 
 	EXPECT_EQ(registry.find("widget_a"), first);
@@ -87,7 +112,7 @@ TEST_F(TestWidgetRegistry, PointersStayValidAfterFurtherAdds)
 TEST_F(TestWidgetRegistry, AvailableWidgetsIncludesEntriesWithNoAvailableGate)
 {
 	WidgetRegistry registry;
-	registry.add({.id = "widget_a"});
+	registry.add(makeDescriptor("widget_a"));
 
 	auto available = registry.availableWidgets();
 	ASSERT_EQ(available.size(), 1u);
@@ -97,8 +122,8 @@ TEST_F(TestWidgetRegistry, AvailableWidgetsIncludesEntriesWithNoAvailableGate)
 TEST_F(TestWidgetRegistry, AvailableWidgetsExcludesGatedFalseEntries)
 {
 	WidgetRegistry registry;
-	registry.add({.id = "widget_a", .available = []() { return true; }});
-	registry.add({.id = "widget_b", .available = []() { return false; }});
+	registry.add(makeDescriptor("widget_a", []() { return true; }));
+	registry.add(makeDescriptor("widget_b", []() { return false; }));
 
 	auto available = registry.availableWidgets();
 	ASSERT_EQ(available.size(), 1u);
@@ -109,7 +134,7 @@ TEST_F(TestWidgetRegistry, AvailableWidgetsGateCanChangeBetweenCalls)
 {
 	WidgetRegistry registry;
 	bool isAvailable = false;
-	registry.add({.id = "widget_a", .available = [&isAvailable]() { return isAvailable; }});
+	registry.add(makeDescriptor("widget_a", [&isAvailable]() { return isAvailable; }));
 
 	EXPECT_EQ(registry.availableWidgets().size(), 0u);
 

@@ -39,6 +39,7 @@ namespace UI::Layout
 			.create =
 				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
 			{ return std::make_unique<ToolList>("tool_list", parent); },
+			.available = nullptr,
 		});
 
 		registry.add({
@@ -50,6 +51,7 @@ namespace UI::Layout
 			.create =
 				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
 			{ return std::make_unique<TemperatureGraph>("graph", parent); },
+			.available = nullptr,
 		});
 
 		// The two file_browser variants use Dashboard's existing fixed storage keys rather than
@@ -75,6 +77,7 @@ namespace UI::Layout
 						.sortDescending = {"ui:dashboard:file:jobs:sort_descending", true},
 						.displayMode = {"ui:dashboard:file:jobs:display_mode", FileView::DisplayMode::List}});
 			},
+			.available = nullptr,
 		});
 
 		registry.add({
@@ -96,6 +99,7 @@ namespace UI::Layout
 				view->getPresenter()->setBaseFolder(FilePresenter::BaseFolder::MACROS);
 				return view;
 			},
+			.available = nullptr,
 		});
 
 		registry.add({
@@ -107,6 +111,7 @@ namespace UI::Layout
 			.create =
 				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
 			{ return std::make_unique<StatusView>("status", parent); },
+			.available = nullptr,
 		});
 	}
 } // namespace UI::Layout
