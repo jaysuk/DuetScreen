@@ -1,5 +1,6 @@
 add_subdirectory(Components)
 add_subdirectory(Core)
+add_subdirectory(Layout)
 add_subdirectory(Screens)
 add_subdirectory(Styles)
 add_subdirectory(Widgets)

@@ -1,0 +1,118 @@
+/*
+ * test_widget_registry.cpp
+ *
+ *  Created on: 2026-07-30
+ *      Author: Jay S
+ */
+
+#include "UI/Layout/WidgetRegistry.h"
+#include "test_utils/TestSuite.h"
+#include <gtest/gtest.h>
+
+using namespace UI::Layout;
+
+// Each test constructs its own local WidgetRegistry rather than touching WidgetRegistry::get(),
+// so tests don't pollute the process-lifetime production singleton or each other.
+class TestWidgetRegistry : public TestSuite
+{
+};
+
+TEST_F(TestWidgetRegistry, FindOnEmptyRegistryReturnsNullptr)
+{
+	WidgetRegistry registry;
+	EXPECT_EQ(registry.find("anything"), nullptr);
+}
+
+TEST_F(TestWidgetRegistry, AddThenFindReturnsTheDescriptor)
+{
+	WidgetRegistry registry;
+	registry.add({.id = "widget_a"});
+
+	const WidgetDescriptor* found = registry.find("widget_a");
+	ASSERT_NE(found, nullptr);
+	EXPECT_EQ(found->id, "widget_a");
+}
+
+TEST_F(TestWidgetRegistry, FindUnknownIdReturnsNullptr)
+{
+	WidgetRegistry registry;
+	registry.add({.id = "widget_a"});
+
+	EXPECT_EQ(registry.find("widget_b"), nullptr);
+}
+
+TEST_F(TestWidgetRegistry, FieldsRoundTripThroughAdd)
+{
+	WidgetRegistry registry;
+	bool availableCalled = false;
+	registry.add({
+		.id = "widget_a",
+		.nameKey = "widget.a.name",
+		.icon = "a.png",
+		.hint = {.minCols = 2, .minRows = 3},
+		.singleton = true,
+		.create = [](const std::string&, LvObj&, const nlohmann::json&) -> std::unique_ptr<LvObj> { return nullptr; },
+		.available = [&availableCalled]() { availableCalled = true; return true; },
+	});
+
+	const WidgetDescriptor* found = registry.find("widget_a");
+	ASSERT_NE(found, nullptr);
+	EXPECT_EQ(found->nameKey, "widget.a.name");
+	EXPECT_EQ(found->icon, "a.png");
+	EXPECT_EQ(found->hint.minCols, 2);
+	EXPECT_EQ(found->hint.minRows, 3);
+	EXPECT_TRUE(found->singleton);
+	ASSERT_TRUE(static_cast<bool>(found->available));
+	EXPECT_TRUE(found->available());
+	EXPECT_TRUE(availableCalled);
+}
+
+TEST_F(TestWidgetRegistry, PointersStayValidAfterFurtherAdds)
+{
+	// m_descriptors is a std::deque specifically so this holds even across many add() calls.
+	WidgetRegistry registry;
+	registry.add({.id = "widget_a"});
+	const WidgetDescriptor* first = registry.find("widget_a");
+	ASSERT_NE(first, nullptr);
+
+	for (int i = 0; i < 50; i++)
+	{
+		registry.add({.id = std::to_string(i)});
+	}
+
+	EXPECT_EQ(registry.find("widget_a"), first);
+	EXPECT_EQ(first->id, "widget_a");
+}
+
+TEST_F(TestWidgetRegistry, AvailableWidgetsIncludesEntriesWithNoAvailableGate)
+{
+	WidgetRegistry registry;
+	registry.add({.id = "widget_a"});
+
+	auto available = registry.availableWidgets();
+	ASSERT_EQ(available.size(), 1u);
+	EXPECT_EQ(available[0]->id, "widget_a");
+}
+
+TEST_F(TestWidgetRegistry, AvailableWidgetsExcludesGatedFalseEntries)
+{
+	WidgetRegistry registry;
+	registry.add({.id = "widget_a", .available = []() { return true; }});
+	registry.add({.id = "widget_b", .available = []() { return false; }});
+
+	auto available = registry.availableWidgets();
+	ASSERT_EQ(available.size(), 1u);
+	EXPECT_EQ(available[0]->id, "widget_a");
+}
+
+TEST_F(TestWidgetRegistry, AvailableWidgetsGateCanChangeBetweenCalls)
+{
+	WidgetRegistry registry;
+	bool isAvailable = false;
+	registry.add({.id = "widget_a", .available = [&isAvailable]() { return isAvailable; }});
+
+	EXPECT_EQ(registry.availableWidgets().size(), 0u);
+
+	isAvailable = true;
+	EXPECT_EQ(registry.availableWidgets().size(), 1u);
+}
