@@ -96,7 +96,8 @@ TEST_F(TestDashboardWidgets, FileBrowserJobsFactoryDefaultsToGcodesFolder)
 	ASSERT_NE(widget, nullptr);
 
 	auto* fileView = static_cast<FileView*>(widget.get());
-	EXPECT_EQ(fileView->getPresenter()->getBaseFolderPath(), OM::Directories::GetGcodesDirectory());
+	// getBaseFolderPath() strips the trailing slash GetGcodesDirectory() includes.
+	EXPECT_EQ(std::string(fileView->getPresenter()->getBaseFolderPath()) + "/", OM::Directories::GetGcodesDirectory());
 }
 
 TEST_F(TestDashboardWidgets, FileBrowserMacrosFactorySetsMacrosFolder)
@@ -108,7 +109,8 @@ TEST_F(TestDashboardWidgets, FileBrowserMacrosFactorySetsMacrosFolder)
 	ASSERT_NE(widget, nullptr);
 
 	auto* fileView = static_cast<FileView*>(widget.get());
-	EXPECT_EQ(fileView->getPresenter()->getBaseFolderPath(), OM::Directories::GetMacrosDirectory());
+	// getBaseFolderPath() strips the trailing slash GetMacrosDirectory() includes.
+	EXPECT_EQ(std::string(fileView->getPresenter()->getBaseFolderPath()) + "/", OM::Directories::GetMacrosDirectory());
 }
 
 TEST_F(TestDashboardWidgets, AllFiveWidgetsAreAvailableByDefault)
