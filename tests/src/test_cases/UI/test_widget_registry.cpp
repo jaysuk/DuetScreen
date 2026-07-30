@@ -7,6 +7,7 @@
 
 #include "UI/Layout/WidgetRegistry.h"
 #include "test_utils/TestSuite.h"
+#include <deque>
 #include <gtest/gtest.h>
 
 using namespace UI::Layout;
@@ -100,9 +101,16 @@ TEST_F(TestWidgetRegistry, PointersStayValidAfterFurtherAdds)
 	const WidgetDescriptor* first = registry.find("widget_a");
 	ASSERT_NE(first, nullptr);
 
+	// WidgetDescriptor::id is a non-owning string_view (production code only ever gives it string
+	// literals), so these ids must outlive the registry - kept alive in `ids` for that reason.
+	// std::deque, not std::vector: these are short strings, so a std::string holds their bytes
+	// inline (SSO) - a std::vector could still relocate that storage on growth and dangle the
+	// string_view already captured from an earlier iteration; std::deque never does.
+	std::deque<std::string> ids;
 	for (int i = 0; i < 50; i++)
 	{
-		registry.add(makeDescriptor(std::to_string(i)));
+		ids.push_back(std::to_string(i));
+		registry.add(makeDescriptor(ids.back()));
 	}
 
 	EXPECT_EQ(registry.find("widget_a"), first);
