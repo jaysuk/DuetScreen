@@ -98,11 +98,22 @@ namespace UI::Layout
 	  private:
 		// A member (rather than a free function) specifically so it can reach LayoutInstance's
 		// private members via the friend declaration below.
+		//
+		// `isRoot` sizes the freshly-created node to LV_PCT(100) x LV_PCT(100) immediately after
+		// creation, before its own layout/children are configured - a layout document describes
+		// everything that goes in the space it's given, so the root has no independent "natural
+		// size" to leave unset. This has to happen *before* children/grid cells are configured, not
+		// as an afterthought once the whole subtree already exists: a grid's cell placement is
+		// resolved against whatever size the container has *at the time*, and a container's default
+		// size (absent an explicit one) is a small fixed default, not 100% of its parent - sizing
+		// it only after the fact produced a dashboard rendered into a tiny corner of the screen
+		// during testing, not full width/height.
 		static LvObj* buildNode(
 			const nlohmann::json& node,
 			LvObj& parent,
 			const std::string& path,
 			LayoutInstance& instance,
-			const WidgetRegistry& registry);
+			const WidgetRegistry& registry,
+			bool isRoot = false);
 	};
 } // namespace UI::Layout
