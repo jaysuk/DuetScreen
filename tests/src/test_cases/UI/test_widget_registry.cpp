@@ -70,8 +70,7 @@ TEST_F(TestWidgetRegistry, FieldsRoundTripThroughAdd)
 		.icon = "a.png",
 		.hint = {.minCols = 2, .minRows = 3},
 		.singleton = true,
-		.create =
-			[](const std::string&, UI::LvObj&, const nlohmann::json&) -> std::unique_ptr<UI::LvObj>
+		.create = [](const std::string&, UI::LvObj&, const nlohmann::json&) -> std::unique_ptr<UI::LvObj>
 		{ return nullptr; },
 		.available =
 			[&availableCalled]()

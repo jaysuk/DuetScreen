@@ -45,14 +45,13 @@ namespace UI::Layout
 		}
 
 		// Shared by validate() and build() so the two can never disagree on what's well-formed.
-		void validateNode(
-			const nlohmann::json& node,
-			const WidgetRegistry& registry,
-			const std::string& path,
-			bool mustBeWidget,
-			std::set<std::string>& seenIds,
-			std::set<std::string>& usedSingletons,
-			std::vector<std::string>& errors)
+		void validateNode(const nlohmann::json& node,
+						  const WidgetRegistry& registry,
+						  const std::string& path,
+						  bool mustBeWidget,
+						  std::set<std::string>& seenIds,
+						  std::set<std::string>& usedSingletons,
+						  std::vector<std::string>& errors)
 		{
 			if (!node.is_object())
 			{
@@ -73,8 +72,7 @@ namespace UI::Layout
 			const bool hasType = node.contains("type");
 			if (hasWidget == hasType)
 			{
-				errors.push_back(
-					fmt::format("node at '{}': must have exactly one of 'widget' or 'type'", path));
+				errors.push_back(fmt::format("node at '{}': must have exactly one of 'widget' or 'type'", path));
 				return;
 			}
 
@@ -128,12 +126,6 @@ namespace UI::Layout
 			}
 			const auto& children = node["children"];
 
-			if ((type == "grid" || type == "row" || type == "column") && node.contains("scrollable") &&
-				!node["scrollable"].is_boolean())
-			{
-				errors.push_back(fmt::format("node at '{}': 'scrollable' must be a boolean", path));
-			}
-
 			if (type == "grid")
 			{
 				if (!node.contains("cols") || !node["cols"].is_array() || node["cols"].empty())
@@ -150,14 +142,16 @@ namespace UI::Layout
 				int32_t dummy;
 				for (size_t i = 0; i < node["cols"].size(); i++)
 				{
-					if (!node["cols"][i].is_string() || !LayoutBuilder::parseTrackSize(node["cols"][i].get<std::string>(), dummy))
+					if (!node["cols"][i].is_string() ||
+						!LayoutBuilder::parseTrackSize(node["cols"][i].get<std::string>(), dummy))
 					{
 						errors.push_back(fmt::format("node at '{}': cols[{}] is not a valid track size", path, i));
 					}
 				}
 				for (size_t i = 0; i < node["rows"].size(); i++)
 				{
-					if (!node["rows"][i].is_string() || !LayoutBuilder::parseTrackSize(node["rows"][i].get<std::string>(), dummy))
+					if (!node["rows"][i].is_string() ||
+						!LayoutBuilder::parseTrackSize(node["rows"][i].get<std::string>(), dummy))
 					{
 						errors.push_back(fmt::format("node at '{}': rows[{}] is not a valid track size", path, i));
 					}
@@ -254,133 +248,133 @@ namespace UI::Layout
 
 	// A member (rather than a free function in the anonymous namespace above) specifically so it
 	// can reach LayoutInstance's private members via the friend declaration.
-	LvObj* LayoutBuilder::buildNode(
-		const nlohmann::json& node, LvObj& parent, const std::string& path, LayoutInstance& instance, const WidgetRegistry& registry)
+	LvObj* LayoutBuilder::buildNode(const nlohmann::json& node,
+									LvObj& parent,
+									const std::string& path,
+									LayoutInstance& instance,
+									const WidgetRegistry& registry)
 	{
 		const std::string id = nodeId(node, path);
 
-			if (node.contains("widget"))
+		if (node.contains("widget"))
+		{
+			const std::string widgetId = node["widget"].get<std::string>();
+			const WidgetDescriptor* descriptor = registry.find(widgetId);
+			const nlohmann::json props = node.value("props", nlohmann::json::object());
+
+			std::unique_ptr<LvObj> widget = descriptor->create(id, parent, props);
+			LvObj* raw = widget.get();
+			instance.m_owned.push_back(std::move(widget));
+			instance.m_byId[id] = raw;
+			return raw;
+		}
+
+		const std::string type = node["type"].get<std::string>();
+		const auto& children = node["children"];
+
+		if (type == "grid")
+		{
+			auto container = std::make_unique<LvContainer>(id, parent);
+			LvObj* raw = container.get();
+
+			std::vector<int32_t> colDsc;
+			for (const auto& token : node["cols"])
 			{
-				const std::string widgetId = node["widget"].get<std::string>();
-				const WidgetDescriptor* descriptor = registry.find(widgetId);
-				const nlohmann::json props = node.value("props", nlohmann::json::object());
-
-				std::unique_ptr<LvObj> widget = descriptor->create(id, parent, props);
-				LvObj* raw = widget.get();
-				instance.m_owned.push_back(std::move(widget));
-				instance.m_byId[id] = raw;
-				return raw;
+				int32_t value = 0;
+				LayoutBuilder::parseTrackSize(token.get<std::string>(), value);
+				colDsc.push_back(value);
 			}
+			colDsc.push_back(LV_GRID_TEMPLATE_LAST);
 
-			const std::string type = node["type"].get<std::string>();
-			const auto& children = node["children"];
-
-			if (type == "grid")
+			std::vector<int32_t> rowDsc;
+			for (const auto& token : node["rows"])
 			{
-				auto container = std::make_unique<LvContainer>(id, parent);
-				LvObj* raw = container.get();
-				raw->setFlag(LV_OBJ_FLAG_SCROLLABLE, node.value("scrollable", true));
-
-				std::vector<int32_t> colDsc;
-				for (const auto& token : node["cols"])
-				{
-					int32_t value = 0;
-					LayoutBuilder::parseTrackSize(token.get<std::string>(), value);
-					colDsc.push_back(value);
-				}
-				colDsc.push_back(LV_GRID_TEMPLATE_LAST);
-
-				std::vector<int32_t> rowDsc;
-				for (const auto& token : node["rows"])
-				{
-					int32_t value = 0;
-					LayoutBuilder::parseTrackSize(token.get<std::string>(), value);
-					rowDsc.push_back(value);
-				}
-				rowDsc.push_back(LV_GRID_TEMPLATE_LAST);
-
-				raw->setLayoutStyle(LV_LAYOUT_GRID);
-				// Push both before taking either reference: correct either way with std::deque
-				// (which never invalidates existing elements' references on push_back), but this
-				// ordering makes that correctness obvious without relying on the reader knowing it.
-				instance.m_gridTrackStorage.push_back(std::move(colDsc));
-				instance.m_gridTrackStorage.push_back(std::move(rowDsc));
-				const auto& storedColDsc = instance.m_gridTrackStorage[instance.m_gridTrackStorage.size() - 2];
-				const auto& storedRowDsc = instance.m_gridTrackStorage.back();
-				raw->setGridDsc(storedColDsc, storedRowDsc);
-
-				instance.m_owned.push_back(std::move(container));
-				instance.m_byId[id] = raw;
-
-				for (size_t i = 0; i < children.size(); i++)
-				{
-					const auto& child = children[i];
-					LvObj* childObj = buildNode(child, *raw, childPath(path, i), instance, registry);
-
-					lv_grid_align_t xAlign = LV_GRID_ALIGN_STRETCH;
-					if (child.contains("xAlign"))
-					{
-						LayoutBuilder::parseAlign(child["xAlign"].get<std::string>(), xAlign);
-					}
-					lv_grid_align_t yAlign = LV_GRID_ALIGN_STRETCH;
-					if (child.contains("yAlign"))
-					{
-						LayoutBuilder::parseAlign(child["yAlign"].get<std::string>(), yAlign);
-					}
-
-					raw->setGridCell(
-						*childObj,
-						xAlign,
-						static_cast<int32_t>(child["col"].get<int64_t>()),
-						static_cast<int32_t>(child.value("colSpan", 1)),
-						yAlign,
-						static_cast<int32_t>(child["row"].get<int64_t>()),
-						static_cast<int32_t>(child.value("rowSpan", 1)));
-				}
-				return raw;
+				int32_t value = 0;
+				LayoutBuilder::parseTrackSize(token.get<std::string>(), value);
+				rowDsc.push_back(value);
 			}
+			rowDsc.push_back(LV_GRID_TEMPLATE_LAST);
 
-			if (type == "row" || type == "column")
-			{
-				std::unique_ptr<LvObj> container;
-				if (type == "row")
-				{
-					container = std::make_unique<Row>(id, parent);
-				}
-				else
-				{
-					container = std::make_unique<Column>(id, parent);
-				}
-				LvObj* raw = container.get();
-				raw->setFlag(LV_OBJ_FLAG_SCROLLABLE, node.value("scrollable", true));
-				instance.m_owned.push_back(std::move(container));
-				instance.m_byId[id] = raw;
+			raw->setLayoutStyle(LV_LAYOUT_GRID);
+			// Push both before taking either reference: correct either way with std::deque
+			// (which never invalidates existing elements' references on push_back), but this
+			// ordering makes that correctness obvious without relying on the reader knowing it.
+			instance.m_gridTrackStorage.push_back(std::move(colDsc));
+			instance.m_gridTrackStorage.push_back(std::move(rowDsc));
+			const auto& storedColDsc = instance.m_gridTrackStorage[instance.m_gridTrackStorage.size() - 2];
+			const auto& storedRowDsc = instance.m_gridTrackStorage.back();
+			raw->setGridDsc(storedColDsc, storedRowDsc);
 
-				for (size_t i = 0; i < children.size(); i++)
-				{
-					const auto& child = children[i];
-					LvObj* childObj = buildNode(child, *raw, childPath(path, i), instance, registry);
-					childObj->setFlexGrow(static_cast<uint8_t>(child.value("grow", 0)));
-				}
-				return raw;
-			}
-
-			// tabs
-			auto tabView = std::make_unique<TabView>(id, parent);
-			LvObj* raw = tabView.get();
-			instance.m_owned.push_back(std::move(tabView));
+			instance.m_owned.push_back(std::move(container));
 			instance.m_byId[id] = raw;
 
 			for (size_t i = 0; i < children.size(); i++)
 			{
 				const auto& child = children[i];
-				const std::string childId = nodeId(child, childPath(path, i));
-				const WidgetDescriptor* descriptor = registry.find(child["widget"].get<std::string>());
-				LvContainer& tabContent = static_cast<TabView*>(raw)->addTab(_(descriptor->nameKey), childId);
-				buildNode(child, tabContent, childPath(path, i), instance, registry);
+				LvObj* childObj = buildNode(child, *raw, childPath(path, i), instance, registry);
+
+				lv_grid_align_t xAlign = LV_GRID_ALIGN_STRETCH;
+				if (child.contains("xAlign"))
+				{
+					LayoutBuilder::parseAlign(child["xAlign"].get<std::string>(), xAlign);
+				}
+				lv_grid_align_t yAlign = LV_GRID_ALIGN_STRETCH;
+				if (child.contains("yAlign"))
+				{
+					LayoutBuilder::parseAlign(child["yAlign"].get<std::string>(), yAlign);
+				}
+
+				raw->setGridCell(*childObj,
+								 xAlign,
+								 static_cast<int32_t>(child["col"].get<int64_t>()),
+								 static_cast<int32_t>(child.value("colSpan", 1)),
+								 yAlign,
+								 static_cast<int32_t>(child["row"].get<int64_t>()),
+								 static_cast<int32_t>(child.value("rowSpan", 1)));
 			}
 			return raw;
 		}
+
+		if (type == "row" || type == "column")
+		{
+			std::unique_ptr<LvObj> container;
+			if (type == "row")
+			{
+				container = std::make_unique<Row>(id, parent);
+			}
+			else
+			{
+				container = std::make_unique<Column>(id, parent);
+			}
+			LvObj* raw = container.get();
+			instance.m_owned.push_back(std::move(container));
+			instance.m_byId[id] = raw;
+
+			for (size_t i = 0; i < children.size(); i++)
+			{
+				const auto& child = children[i];
+				LvObj* childObj = buildNode(child, *raw, childPath(path, i), instance, registry);
+				childObj->setFlexGrow(static_cast<uint8_t>(child.value("grow", 0)));
+			}
+			return raw;
+		}
+
+		// tabs
+		auto tabView = std::make_unique<TabView>(id, parent);
+		LvObj* raw = tabView.get();
+		instance.m_owned.push_back(std::move(tabView));
+		instance.m_byId[id] = raw;
+
+		for (size_t i = 0; i < children.size(); i++)
+		{
+			const auto& child = children[i];
+			const std::string childId = nodeId(child, childPath(path, i));
+			const WidgetDescriptor* descriptor = registry.find(child["widget"].get<std::string>());
+			LvContainer& tabContent = static_cast<TabView*>(raw)->addTab(_(descriptor->nameKey), childId);
+			buildNode(child, tabContent, childPath(path, i), instance, registry);
+		}
+		return raw;
+	}
 
 	LvObj* LayoutInstance::find(std::string_view id) const
 	{
@@ -419,8 +413,10 @@ namespace UI::Layout
 		return result;
 	}
 
-	std::unique_ptr<LayoutInstance> LayoutBuilder::build(
-		const nlohmann::json& doc, LvObj& parent, const WidgetRegistry& registry, std::vector<std::string>* errorsOut)
+	std::unique_ptr<LayoutInstance> LayoutBuilder::build(const nlohmann::json& doc,
+														 LvObj& parent,
+														 const WidgetRegistry& registry,
+														 std::vector<std::string>* errorsOut)
 	{
 		ZoneScoped;
 		ValidationResult validation = validate(doc, registry);
@@ -439,9 +435,6 @@ namespace UI::Layout
 
 		auto instance = std::make_unique<LayoutInstance>();
 		instance->m_root = buildNode(doc["root"], parent, "root", *instance, registry);
-		// The root fills whatever space it's given - a layout document describes everything that
-		// goes in that space, so there's no independent "natural size" for the document as a whole.
-		instance->m_root->setSize(LV_PCT(100), LV_PCT(100));
 		return instance;
 	}
 

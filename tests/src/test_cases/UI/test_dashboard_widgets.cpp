@@ -26,8 +26,7 @@ TEST_F(TestDashboardWidgets, RegistersAllFiveDashboardWidgets)
 {
 	auto& registry = WidgetRegistry::get();
 
-	for (std::string_view id :
-		 {"tool_list", "temperature_graph", "file_browser_jobs", "file_browser_macros", "status"})
+	for (std::string_view id : {"tool_list", "temperature_graph", "file_browser_jobs", "file_browser_macros", "status"})
 	{
 		EXPECT_NE(registry.find(id), nullptr) << "expected widget id '" << id << "' to be registered";
 	}
@@ -48,8 +47,7 @@ TEST_F(TestDashboardWidgets, AllFiveDescriptorsAreSingletons)
 {
 	auto& registry = WidgetRegistry::get();
 
-	for (std::string_view id :
-		 {"tool_list", "temperature_graph", "file_browser_jobs", "file_browser_macros", "status"})
+	for (std::string_view id : {"tool_list", "temperature_graph", "file_browser_jobs", "file_browser_macros", "status"})
 	{
 		const WidgetDescriptor* descriptor = registry.find(id);
 		ASSERT_NE(descriptor, nullptr);
@@ -118,8 +116,7 @@ TEST_F(TestDashboardWidgets, AllFiveWidgetsAreAvailableByDefault)
 	auto available = WidgetRegistry::get().availableWidgets();
 
 	size_t matched = 0;
-	for (std::string_view id :
-		 {"tool_list", "temperature_graph", "file_browser_jobs", "file_browser_macros", "status"})
+	for (std::string_view id : {"tool_list", "temperature_graph", "file_browser_jobs", "file_browser_macros", "status"})
 	{
 		bool found = false;
 		for (const WidgetDescriptor* descriptor : available)

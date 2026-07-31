@@ -30,8 +30,7 @@ namespace
 			.icon = {},
 			.hint = {},
 			.singleton = false,
-			.create =
-				[](const std::string& id, LvObj& parent, const json&) -> std::unique_ptr<LvObj>
+			.create = [](const std::string& id, LvObj& parent, const json&) -> std::unique_ptr<LvObj>
 			{ return std::make_unique<LvContainer>(id, parent); },
 			.available = nullptr,
 		});
@@ -41,8 +40,7 @@ namespace
 			.icon = {},
 			.hint = {},
 			.singleton = true,
-			.create =
-				[](const std::string& id, LvObj& parent, const json&) -> std::unique_ptr<LvObj>
+			.create = [](const std::string& id, LvObj& parent, const json&) -> std::unique_ptr<LvObj>
 			{ return std::make_unique<LvContainer>(id, parent); },
 			.available = nullptr,
 		});

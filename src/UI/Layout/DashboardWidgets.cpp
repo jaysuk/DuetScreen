@@ -6,13 +6,11 @@
  */
 
 #include "DashboardWidgets.h"
-#include "WidgetRegistry.h"
-#include "Configuration.h"
 #include "UI/Screens/File/FileView.h"
 #include "UI/Screens/Status/StatusView.h"
-#include "UI/Styles/Styles.h"
 #include "UI/Widgets/Temperature/TemperatureGraph.h"
 #include "UI/Widgets/ToolList/ToolList.h"
+#include "WidgetRegistry.h"
 
 namespace UI::Layout
 {
@@ -38,17 +36,8 @@ namespace UI::Layout
 			.icon = "control.png",
 			.hint = {.minCols = 2, .minRows = 1},
 			.singleton = true,
-			.create =
-				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
-			{
-				auto widget = std::make_unique<ToolList>("tool_list", parent);
-				widget->addStyle(Themes::getLvglStyles().card);
-				// Matches Dashboard's original fixed sizing: grow to fit its tools, but never take
-				// more than half the available height.
-				widget->setHeight(LV_SIZE_CONTENT);
-				widget->setMaxHeight(LV_PCT(50));
-				return widget;
-			},
+			.create = [](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
+			{ return std::make_unique<ToolList>("tool_list", parent); },
 			.available = nullptr,
 		});
 
@@ -58,17 +47,8 @@ namespace UI::Layout
 			.icon = "temperature.png",
 			.hint = {.minCols = 2, .minRows = 1},
 			.singleton = true,
-			.create =
-				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
-			{
-				auto widget = std::make_unique<TemperatureGraph>("graph", parent);
-				widget->addStyle(Themes::getLvglStyles().card);
-				// Matches Dashboard's original fixed range: last 60s of history, 0-300C.
-				widget->setXRange({.min = -60, .max = 0});
-				widget->setYRange({.min = 0, .max = 300});
-				widget->setXCount(-widget->getXRange().min * MODEL_TICK_HZ * 2);
-				return widget;
-			},
+			.create = [](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
+			{ return std::make_unique<TemperatureGraph>("graph", parent); },
 			.available = nullptr,
 		});
 
@@ -84,18 +64,15 @@ namespace UI::Layout
 			.icon = "folder.png",
 			.hint = {.minCols = 1, .minRows = 1},
 			.singleton = true,
-			.create =
-				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
+			.create = [](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
 			{
-				auto view = std::make_unique<FileView>(
+				return std::make_unique<FileView>(
 					"files",
 					parent,
 					FileView::StorageKeys{
 						.sortBy = {"ui:dashboard:file:jobs:sort_by", OM::FileSystem::SortBy::DATE},
 						.sortDescending = {"ui:dashboard:file:jobs:sort_descending", true},
 						.displayMode = {"ui:dashboard:file:jobs:display_mode", FileView::DisplayMode::List}});
-				view->addStyle(Themes::getLvglStyles().card);
-				return view;
 			},
 			.available = nullptr,
 		});
@@ -106,8 +83,7 @@ namespace UI::Layout
 			.icon = "macros.png",
 			.hint = {.minCols = 1, .minRows = 1},
 			.singleton = true,
-			.create =
-				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
+			.create = [](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
 			{
 				auto view = std::make_unique<FileView>(
 					"macros",
@@ -117,7 +93,6 @@ namespace UI::Layout
 						.sortDescending = {"ui:dashboard:file:macros:sort_descending", false},
 						.displayMode = {"ui:dashboard:file:macros:display_mode", FileView::DisplayMode::List}});
 				view->getPresenter()->setBaseFolder(FilePresenter::BaseFolder::MACROS);
-				view->addStyle(Themes::getLvglStyles().card);
 				return view;
 			},
 			.available = nullptr,
@@ -129,8 +104,7 @@ namespace UI::Layout
 			.icon = "status.png",
 			.hint = {.minCols = 1, .minRows = 1},
 			.singleton = true,
-			.create =
-				[](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
+			.create = [](const std::string&, LvObj& parent, const nlohmann::json&) -> std::unique_ptr<LvObj>
 			{ return std::make_unique<StatusView>("status", parent); },
 			.available = nullptr,
 		});
