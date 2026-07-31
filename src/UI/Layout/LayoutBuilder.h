@@ -41,11 +41,13 @@ namespace UI::Layout
 		// under them). std::deque so LvObj addresses stay stable as more nodes are added.
 		std::deque<std::unique_ptr<LvObj>> m_owned;
 		// Grid track-descriptor arrays: LvObj::setGridDsc stores the raw pointer it's given rather
-		// than copying it (see lv_obj_set_grid_dsc_array), so these must outlive the grid
-		// container. A std::vector<int32_t>'s element buffer is a separate heap allocation from
-		// the vector object itself, so relocating this outer container on growth does not
-		// invalidate a previously-taken .data() pointer.
-		std::vector<std::vector<int32_t>> m_gridTrackStorage;
+		// than copying it (see lv_obj_set_grid_dsc_array), and holds onto it for as long as the
+		// grid container exists - not just for the duration of the setGridDsc() call. std::deque,
+		// not std::vector: a vector reallocating on a *later* grid's push_back would relocate an
+		// *earlier* grid's std::vector<int32_t> element, dangling the pointer LVGL is still
+		// holding for that earlier grid even though it was never touched again. A deque never
+		// moves existing elements as more are appended.
+		std::deque<std::vector<int32_t>> m_gridTrackStorage;
 		std::unordered_map<std::string, LvObj*> m_byId;
 	};
 

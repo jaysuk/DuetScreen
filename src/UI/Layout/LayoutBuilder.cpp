@@ -293,9 +293,12 @@ namespace UI::Layout
 				rowDsc.push_back(LV_GRID_TEMPLATE_LAST);
 
 				raw->setLayoutStyle(LV_LAYOUT_GRID);
+				// Push both before taking either reference: correct either way with std::deque
+				// (which never invalidates existing elements' references on push_back), but this
+				// ordering makes that correctness obvious without relying on the reader knowing it.
 				instance.m_gridTrackStorage.push_back(std::move(colDsc));
-				const auto& storedColDsc = instance.m_gridTrackStorage.back();
 				instance.m_gridTrackStorage.push_back(std::move(rowDsc));
+				const auto& storedColDsc = instance.m_gridTrackStorage[instance.m_gridTrackStorage.size() - 2];
 				const auto& storedRowDsc = instance.m_gridTrackStorage.back();
 				raw->setGridDsc(storedColDsc, storedRowDsc);
 
