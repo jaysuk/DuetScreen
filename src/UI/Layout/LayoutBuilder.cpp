@@ -244,10 +244,14 @@ namespace UI::Layout
 			}
 		}
 
-		LvObj* buildNode(
-			const nlohmann::json& node, LvObj& parent, const std::string& path, LayoutInstance& instance, const WidgetRegistry& registry)
-		{
-			const std::string id = nodeId(node, path);
+	} // namespace
+
+	// A member (rather than a free function in the anonymous namespace above) specifically so it
+	// can reach LayoutInstance's private members via the friend declaration.
+	LvObj* LayoutBuilder::buildNode(
+		const nlohmann::json& node, LvObj& parent, const std::string& path, LayoutInstance& instance, const WidgetRegistry& registry)
+	{
+		const std::string id = nodeId(node, path);
 
 			if (node.contains("widget"))
 			{
@@ -366,7 +370,6 @@ namespace UI::Layout
 			}
 			return raw;
 		}
-	} // namespace
 
 	LvObj* LayoutInstance::find(std::string_view id) const
 	{

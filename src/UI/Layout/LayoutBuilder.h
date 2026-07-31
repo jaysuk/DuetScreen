@@ -92,5 +92,15 @@ namespace UI::Layout
 		/// Parses a cell-alignment token ("stretch", "start", "center", "end"). Returns false
 		/// (leaving `out` unchanged) if `token` isn't one of those four.
 		static bool parseAlign(std::string_view token, lv_grid_align_t& out);
+
+	  private:
+		// A member (rather than a free function) specifically so it can reach LayoutInstance's
+		// private members via the friend declaration below.
+		static LvObj* buildNode(
+			const nlohmann::json& node,
+			LvObj& parent,
+			const std::string& path,
+			LayoutInstance& instance,
+			const WidgetRegistry& registry);
 	};
 } // namespace UI::Layout
