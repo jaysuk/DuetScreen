@@ -10,26 +10,36 @@
 #include "DashboardPresenter.h"
 #include "UI/Components/Containers/TabView.h"
 #include "UI/Core/View.h"
+#include "UI/Layout/LayoutBuilder.h"
 #include "UI/Screens/File/FileView.h"
 #include "UI/Screens/Status/StatusView.h"
 #include "UI/Widgets/Temperature/TemperatureGraph.h"
 #include "UI/Widgets/ToolList/ToolList.h"
+#include <memory>
 
 namespace UI
 {
+	/**
+	 * @brief The dashboard's composition is data-driven - see assets/layouts/default.json and
+	 * docs/LAYOUT_ENGINE_DESIGN.md. The accessors below still return concrete references (rather
+	 * than becoming nullable) because, for now, the default layout is fixed and known-good: every
+	 * id they look up is guaranteed present by construction, the same guarantee static members gave
+	 * before. That stops being true once layouts become user-editable (see the design doc's later
+	 * phases), at which point these will need to change.
+	 */
 	class Dashboard : public View<DashboardPresenter>
 	{
 	  public:
 		Dashboard(const std::string& name, LvObj& parent);
 
-		ToolList& getToolList() { return m_toolList; }
-		TemperatureGraph& getGraph() { return m_graph; }
-		TabView& getTabs() { return m_tabs; }
-		FileView& getFileView() { return m_fileView; }
-		StatusView& getStatusView() { return m_statusView; }
+		ToolList& getToolList() { return static_cast<ToolList&>(*m_layout->find("tool_list")); }
+		TemperatureGraph& getGraph() { return static_cast<TemperatureGraph&>(*m_layout->find("temperature_graph")); }
+		TabView& getTabs() { return static_cast<TabView&>(*m_layout->find("tabs")); }
+		FileView& getFileView() { return static_cast<FileView&>(*m_layout->find("jobs")); }
+		StatusView& getStatusView() { return static_cast<StatusView&>(*m_layout->find("status")); }
 
-		void showJobsTab() { m_tabs.setActiveTabById("jobs"); }
-		void showStatusTab() { m_tabs.setActiveTabById("status"); }
+		void showJobsTab() { getTabs().setActiveTabById("jobs"); }
+		void showStatusTab() { getTabs().setActiveTabById("status"); }
 		void disableJobsTab(bool disable);
 
 		void setNumberPad(ModalNumberPad* np);
@@ -40,23 +50,6 @@ namespace UI
 		void onHide() override;
 
 	  private:
-		ToolList m_toolList{"tool_list", getRoot(), this};
-		TemperatureGraph m_graph{"graph", getRoot()};
-
-		TabView m_tabs{"tabs", getRoot()};
-		FileView m_fileView{
-			"files",
-			m_tabs.addTab(_("file.jobs"), "jobs"),
-			FileView::StorageKeys{.sortBy = {"ui:dashboard:file:jobs:sort_by", OM::FileSystem::SortBy::DATE},
-								  .sortDescending = {"ui:dashboard:file:jobs:sort_descending", true},
-								  .displayMode = {"ui:dashboard:file:jobs:display_mode", FileView::DisplayMode::List}}};
-		FileView m_macroView{
-			"macros",
-			m_tabs.addTab(_("file.macros"), "macros"),
-			FileView::StorageKeys{
-				.sortBy = {"ui:dashboard:file:macros:sort_by", OM::FileSystem::SortBy::NAME},
-				.sortDescending = {"ui:dashboard:file:macros:sort_descending", false},
-				.displayMode = {"ui:dashboard:file:macros:display_mode", FileView::DisplayMode::List}}};
-		StatusView m_statusView{"status", m_tabs.addTab(_("app_drawer.status"), "status")};
+		std::unique_ptr<Layout::LayoutInstance> m_layout;
 	};
 } // namespace UI

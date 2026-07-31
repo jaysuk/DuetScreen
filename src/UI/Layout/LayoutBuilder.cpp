@@ -128,6 +128,12 @@ namespace UI::Layout
 			}
 			const auto& children = node["children"];
 
+			if ((type == "grid" || type == "row" || type == "column") && node.contains("scrollable") &&
+				!node["scrollable"].is_boolean())
+			{
+				errors.push_back(fmt::format("node at '{}': 'scrollable' must be a boolean", path));
+			}
+
 			if (type == "grid")
 			{
 				if (!node.contains("cols") || !node["cols"].is_array() || node["cols"].empty())
@@ -273,6 +279,7 @@ namespace UI::Layout
 			{
 				auto container = std::make_unique<LvContainer>(id, parent);
 				LvObj* raw = container.get();
+				raw->setFlag(LV_OBJ_FLAG_SCROLLABLE, node.value("scrollable", true));
 
 				std::vector<int32_t> colDsc;
 				for (const auto& token : node["cols"])
@@ -345,6 +352,7 @@ namespace UI::Layout
 					container = std::make_unique<Column>(id, parent);
 				}
 				LvObj* raw = container.get();
+				raw->setFlag(LV_OBJ_FLAG_SCROLLABLE, node.value("scrollable", true));
 				instance.m_owned.push_back(std::move(container));
 				instance.m_byId[id] = raw;
 
@@ -431,6 +439,9 @@ namespace UI::Layout
 
 		auto instance = std::make_unique<LayoutInstance>();
 		instance->m_root = buildNode(doc["root"], parent, "root", *instance, registry);
+		// The root fills whatever space it's given - a layout document describes everything that
+		// goes in that space, so there's no independent "natural size" for the document as a whole.
+		instance->m_root->setSize(LV_PCT(100), LV_PCT(100));
 		return instance;
 	}
 
