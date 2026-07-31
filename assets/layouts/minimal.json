@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "name": "Minimal",
+  "root": {
+    "id": "tabs",
+    "type": "tabs",
+    "children": [
+      { "id": "jobs", "widget": "file_browser_jobs" },
+      { "id": "macros", "widget": "file_browser_macros" },
+      { "id": "status", "widget": "status" }
+    ]
+  }
+}

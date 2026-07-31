@@ -7,8 +7,10 @@
 
 #include "Dashboard.h"
 #include "Debug.h"
+#include "Storage.h"
 #include "UI/Layout/DashboardWidgets.h"
 #include "UI/Layout/LayoutLoader.h"
+#include "utils/StorageHelper.h"
 
 namespace UI
 {
@@ -22,22 +24,40 @@ namespace UI
 
 		Layout::registerDashboardWidgets();
 
-		std::optional<nlohmann::json> doc = Layout::loadLayoutDocument("default.json");
+		if (!reload())
+		{
+			// Unlike a later reload() failure, there's no already-built layout to fall back to here.
+			LOG_FATAL_THROW("Failed to build the initial dashboard layout");
+		}
+	}
+
+	bool Dashboard::reload()
+	{
+		ZoneScoped;
+		const std::string_view layoutFile = StorageHelper::getData(ID_LAYOUT_FILE);
+
+		std::optional<nlohmann::json> doc = Layout::loadLayoutDocument(layoutFile);
 		if (!doc)
 		{
-			LOG_FATAL_THROW("Failed to load the default dashboard layout");
-			return;
+			LOG_ERROR("Failed to load dashboard layout '{:s}', keeping the current one", layoutFile);
+			return false;
 		}
 
-		m_layout = Layout::LayoutBuilder::build(*doc, *this);
-		if (!m_layout)
+		std::unique_ptr<Layout::LayoutInstance> newLayout = Layout::LayoutBuilder::build(*doc, *this);
+		if (!newLayout)
 		{
-			LOG_FATAL_THROW("Failed to build the default dashboard layout");
-			return;
+			LOG_ERROR("Failed to build dashboard layout '{:s}', keeping the current one", layoutFile);
+			return false;
 		}
+
+		// Destroy the old tree before installing the new one: LayoutInstance owns its LvObjs, and
+		// View<Presenter>'s destructor unbinds each widget's presenter from the Model as it goes.
+		m_layout.reset();
+		m_layout = std::move(newLayout);
 
 		/* Tabs (Jobs & Status) */
 		getTabs().setActiveTabById("jobs");
+		return true;
 	}
 
 	void Dashboard::disableJobsTab(bool disable)
@@ -55,16 +75,25 @@ namespace UI
 	void Dashboard::clear()
 	{
 		ZoneScoped;
-		getToolList().setToolCount(0);
-		getToolList().hideNumberPad();
-		getGraph().clear();
+		if (LvObj* toolList = m_layout->find("tool_list"))
+		{
+			static_cast<ToolList*>(toolList)->setToolCount(0);
+			static_cast<ToolList*>(toolList)->hideNumberPad();
+		}
+		if (LvObj* graph = m_layout->find("temperature_graph"))
+		{
+			static_cast<TemperatureGraph*>(graph)->clear();
+		}
 	}
 
 	void Dashboard::onHide()
 	{
 		ZoneScoped;
 		// Keep only the temperature graph subscriptions active while hidden.
-		getGraph().activate();
+		if (LvObj* graph = m_layout->find("temperature_graph"))
+		{
+			static_cast<TemperatureGraph*>(graph)->activate();
+		}
 	}
 
 } // namespace UI

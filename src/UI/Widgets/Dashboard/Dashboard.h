@@ -20,12 +20,14 @@
 namespace UI
 {
 	/**
-	 * @brief The dashboard's composition is data-driven - see assets/layouts/default.json and
-	 * docs/LAYOUT_ENGINE_DESIGN.md. The accessors below still return concrete references (rather
-	 * than becoming nullable) because, for now, the default layout is fixed and known-good: every
-	 * id they look up is guaranteed present by construction, the same guarantee static members gave
-	 * before. That stops being true once layouts become user-editable (see the design doc's later
-	 * phases), at which point these will need to change.
+	 * @brief The dashboard's composition is data-driven - see assets/layouts/ and
+	 * docs/LAYOUT_ENGINE_DESIGN.md. The user can pick from a curated set of shipped presets (Settings
+	 * > Display > Layout), each fixed and known-good, but not every preset contains every widget (see
+	 * assets/layouts/minimal.json). The accessors below still return concrete references rather than
+	 * becoming nullable, because every widget *except* tool_list/temperature_graph is present in
+	 * every preset shipped today - see the comment on m_layout for how those two are handled. Once
+	 * layouts are genuinely user-*editable*, rather than a choice between fixed presets, this
+	 * guarantee stops holding for everything and these will need to change.
 	 */
 	class Dashboard : public View<DashboardPresenter>
 	{
@@ -46,10 +48,26 @@ namespace UI
 
 		void clear();
 
+		/**
+		 * @brief Tears down the current layout and rebuilds from whichever file ID_LAYOUT_FILE
+		 * currently names (see the preset picker in Settings > Display). Rebuilds wholesale rather
+		 * than diffing, per docs/LAYOUT_ENGINE_DESIGN.md section 4.3.
+		 *
+		 * @return false (leaving the current layout in place, unlike the constructor's use of this
+		 * same loading path) if the named file can't be loaded/parsed/built - unlike at startup,
+		 * there's always a known-good layout already on screen to fall back to here.
+		 */
+		bool reload();
+
 	  protected:
 		void onHide() override;
 
 	  private:
+		// tool_list/temperature_graph are the only widgets a shipped preset may omit (see
+		// assets/layouts/minimal.json) - clear()/onHide() are the only places that touch them
+		// outside the accessors above, so they're the only places that need to tolerate absence.
+		// The accessors themselves stay reference-returning (see the class comment) because every
+		// *other* widget they look up is present in every preset shipped today.
 		std::unique_ptr<Layout::LayoutInstance> m_layout;
 	};
 } // namespace UI

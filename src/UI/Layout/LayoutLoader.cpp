@@ -7,6 +7,8 @@
 
 #include "LayoutLoader.h"
 #include "Debug.h"
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 
 namespace UI::Layout
@@ -40,5 +42,39 @@ namespace UI::Layout
 			LOG_ERROR("Failed to parse layout document '{:s}': {:s}", path, e.what());
 			return std::nullopt;
 		}
+	}
+
+	std::vector<LayoutInfo> getAvailableLayouts()
+	{
+		ZoneScoped;
+		std::vector<LayoutInfo> layouts;
+
+		std::error_code ec;
+		std::filesystem::directory_iterator dirIter(LAYOUTS_DIR, ec);
+		if (ec)
+		{
+			LOG_ERROR("Failed to list layouts directory '{:s}': {:s}", LAYOUTS_DIR, ec.message());
+			return layouts;
+		}
+
+		for (const auto& entry : dirIter)
+		{
+			if (!entry.is_regular_file() || entry.path().extension() != ".json")
+			{
+				continue;
+			}
+
+			const std::string filename = entry.path().filename().string();
+			std::optional<nlohmann::json> doc = loadLayoutDocument(filename);
+			if (!doc)
+			{
+				continue; // Already logged by loadLayoutDocument().
+			}
+
+			layouts.push_back({.file = filename, .name = doc->value("name", filename)});
+		}
+
+		std::sort(layouts.begin(), layouts.end(), [](const LayoutInfo& a, const LayoutInfo& b) { return a.file < b.file; });
+		return layouts;
 	}
 } // namespace UI::Layout

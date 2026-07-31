@@ -299,6 +299,7 @@
         "title": "Cambiare lingua",
         "text": "Il cambio di lingua richiede un riavvio. Continuare?"
       },
+      "layout": "Layout",
       "notification_auto_close_error": "Non chiudere automaticamente i messaggi di errore:",
       "notification_level": "Livello di notifica:",
       "notification_timeout": "Timeout notifiche (ms):",

@@ -120,6 +120,8 @@ namespace UI
 		ThemePreview m_themePreview{"theme_preview", getRoot()};
 		LvSettingsToggle m_enableAnimations{"enable_animations", getRoot()};
 		DropdownMenu m_screenRotation{"screen_rotation", getRoot()};
+		DropdownMenu m_layout{"layout", getRoot()};
+		std::vector<std::string> m_layoutFiles; // parallel to m_layout's options, by dropdown index
 	};
 
 	class DeveloperSettings : public View<DeveloperSettingsPresenter, SettingsTab>

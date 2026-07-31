@@ -299,6 +299,7 @@
         "title": "Alterar idioma",
         "text": "A alteração do idioma requer um reinício. Continuar?"
       },
+      "layout": "Esquema",
       "notification_auto_close_error": "Não fechar automaticamente mensagens de erro:",
       "notification_level": "Nível de notificação:",
       "notification_timeout": "Tempo de espera de notificação (ms):",

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "name": "Files First",
+  "root": {
+    "id": "grid",
+    "type": "grid",
+    "scrollable": false,
+    "cols": ["2fr", "3fr"],
+    "rows": ["content", "1fr"],
+    "children": [
+      {
+        "id": "tool_list",
+        "widget": "tool_list",
+        "col": 0,
+        "row": 0,
+        "yAlign": "start"
+      },
+      {
+        "id": "temperature_graph",
+        "widget": "temperature_graph",
+        "col": 0,
+        "row": 1
+      },
+      {
+        "id": "tabs",
+        "type": "tabs",
+        "col": 1,
+        "row": 0,
+        "rowSpan": 2,
+        "children": [
+          { "id": "jobs", "widget": "file_browser_jobs" },
+          { "id": "macros", "widget": "file_browser_macros" },
+          { "id": "status", "widget": "status" }
+        ]
+      }
+    ]
+  }
+}

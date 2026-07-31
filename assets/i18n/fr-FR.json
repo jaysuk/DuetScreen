@@ -299,6 +299,7 @@
         "title": "Changer la langue",
         "text": "Le changement de langue nécessite un redémarrage. Continuer ?"
       },
+      "layout": "Disposition",
       "notification_auto_close_error": "Ne pas fermer automatiquement les messages d'erreur :",
       "notification_level": "Niveau de notification :",
       "notification_timeout": "Délai de notification (ms) :",

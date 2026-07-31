@@ -299,6 +299,7 @@
         "title": "Change Language",
         "text": "Changing the language requires a restart. Continue?"
       },
+      "layout": "Layout",
       "notification_auto_close_error": "Do not close error messages automatically:",
       "notification_level": "Notification Level:",
       "notification_timeout": "Notification Timeout (ms):",

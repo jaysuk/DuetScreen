@@ -6,6 +6,7 @@
 #include "Hardware/Reset.h"
 #include "ObjectModel/Job.h"
 #include "UI/Core/Navigation.h"
+#include "UI/Layout/LayoutLoader.h"
 #include "UI/Screens/Home/HomeView.h"
 #include "UI/Styles/Styles.h"
 #include "UI/Styles/Themes/CustomTheme.h"
@@ -689,6 +690,38 @@ namespace UI
 				}
 				DisplayHelper::setRotation(s_screenRotations[index].rotation);
 			});
+
+		/* Dashboard layout */
+		createRow(_("settings.layout"), m_layout);
+		m_layout.setHeight(LV_SIZE_CONTENT);
+		for (const auto& info : Layout::getAvailableLayouts())
+		{
+			m_layout.addOption(info.name);
+			m_layoutFiles.push_back(info.file);
+		}
+		m_layout.setSelectedCallback(
+			[this](uint32_t index, std::string_view)
+			{
+				if (index >= m_layoutFiles.size())
+				{
+					LOG_ERROR("Invalid layout index: {:d}", index);
+					return;
+				}
+				LOG_INFO("Changing dashboard layout to '{:s}'", m_layoutFiles[index]);
+				StorageHelper::setData(ID_LAYOUT_FILE, m_layoutFiles[index]);
+				HomeView::instance().getDashboard().reload();
+			});
+		{
+			const auto stored = StorageHelper::getData(ID_LAYOUT_FILE);
+			for (size_t i = 0; i < m_layoutFiles.size(); i++)
+			{
+				if (m_layoutFiles[i] == stored)
+				{
+					m_layout.setSelected(static_cast<uint32_t>(i));
+					break;
+				}
+			}
+		}
 	}
 
 	void DisplaySettings::updateThemePreview()
