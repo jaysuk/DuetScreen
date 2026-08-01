@@ -79,6 +79,12 @@ namespace UI
 		/// validate/build.
 		bool previewDocument(const nlohmann::json& doc);
 
+		/// Looks up a built widget/container by its document node id - every node in
+		/// getCurrentDocument() carries an explicit "id" (see docs/LAYOUT_ENGINE_DESIGN.md and
+		/// assets/layouts/*.json), which the layout editor uses to attach edit-mode chrome to the
+		/// right LvObj. nullptr if `id` isn't in the current tree.
+		LvObj* findWidget(std::string_view id) { return m_layout->find(id); }
+
 	  protected:
 		void onHide() override;
 

@@ -126,6 +126,48 @@ namespace UI::Layout
 		{
 			return grid.contains(key) && grid[key].is_array() ? static_cast<int64_t>(grid[key].size()) : 0;
 		}
+
+		bool idUsedAnywhere(const nlohmann::json& node, std::string_view id)
+		{
+			if (!node.is_object())
+			{
+				return false;
+			}
+			if (node.value("id", std::string()) == id)
+			{
+				return true;
+			}
+			if (node.contains("children") && node["children"].is_array())
+			{
+				for (const auto& child : node["children"])
+				{
+					if (idUsedAnywhere(child, id))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		// Every node in a shipped layout document carries an explicit "id" (see e.g.
+		// assets/layouts/default.json) - LayoutBuilder only falls back to a path-derived id for a node
+		// that omits one, and that derivation is a private implementation detail of LayoutBuilder.cpp,
+		// not something callers can reliably reproduce (e.g. to correlate a document node back to its
+		// built LvObj). A widget added through the editor gets an explicit id up front instead, in
+		// "<widgetId>_<n>" form with the smallest n making it unique in the document.
+		std::string generateUniqueId(const nlohmann::json& doc, std::string_view widgetId)
+		{
+			const nlohmann::json* root = doc.contains("root") ? &doc["root"] : nullptr;
+			for (int n = 1;; n++)
+			{
+				std::string candidate = fmt::format("{}_{}", widgetId, n);
+				if (root == nullptr || !idUsedAnywhere(*root, candidate))
+				{
+					return candidate;
+				}
+			}
+		}
 	} // namespace
 
 	EditResult moveWidget(nlohmann::json& doc, std::string_view widgetPath, int col, int row)
@@ -455,6 +497,7 @@ namespace UI::Layout
 
 		nlohmann::json newNode;
 		newNode["widget"] = std::string(widgetId);
+		newNode["id"] = generateUniqueId(working, widgetId);
 		newNode["col"] = col;
 		newNode["row"] = row;
 		children.push_back(std::move(newNode));

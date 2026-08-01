@@ -294,8 +294,24 @@ TEST_F(TestLayoutDocumentEditor, AddWidgetToEmptyCellSucceeds)
 	auto result = addWidget(doc, "/root", 1, 0, "widget_a", makeTestRegistry());
 	EXPECT_TRUE(result.ok) << result.error;
 	ASSERT_EQ(doc["root"]["children"].size(), 1u);
+	EXPECT_EQ(doc["root"]["children"][0]["id"], "widget_a_1");
 	EXPECT_EQ(doc["root"]["children"][0]["widget"], "widget_a");
 	EXPECT_TRUE(LayoutBuilder::validate(doc, makeTestRegistry()).ok);
+}
+
+TEST_F(TestLayoutDocumentEditor, AddWidgetGeneratesAUniqueIdEvenWhenTheBaseNameCollides)
+{
+	json doc = json::parse(R"({
+		"schema": 1,
+		"root": {
+			"type": "grid", "cols": ["1fr", "1fr"], "rows": ["1fr"],
+			"children": [ { "widget": "widget_a", "id": "widget_a_1", "col": 0, "row": 0 } ]
+		}
+	})");
+
+	auto result = addWidget(doc, "/root", 1, 0, "widget_a", makeTestRegistry());
+	EXPECT_TRUE(result.ok) << result.error;
+	EXPECT_EQ(doc["root"]["children"][1]["id"], "widget_a_2");
 }
 
 TEST_F(TestLayoutDocumentEditor, AddWidgetToOccupiedCellFails)
