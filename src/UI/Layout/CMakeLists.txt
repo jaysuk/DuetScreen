@@ -5,4 +5,5 @@ target_sources(
   ${CMAKE_CURRENT_SOURCE_DIR}/DashboardWidgets.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/LayoutBuilder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/LayoutLoader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/LayoutDocumentEditor.cpp
 )
