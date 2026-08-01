@@ -8,7 +8,9 @@
 #include "DashboardLayoutEditor.h"
 #include "Debug.h"
 #include "Storage.h"
+#include "Subscribers/ResponseSubscribers.h"
 #include "UI/Layout/LayoutLoader.h"
+#include "UI/Screens/Home/HomeView.h"
 #include "UI/Styles/Styles.h"
 #include "UI/Widgets/Dashboard/Dashboard.h"
 #include "i18n/i18n.h"
@@ -39,7 +41,6 @@ namespace UI
 		, m_gridBtn("grid", m_toolbar, _("layout_editor.grid"))
 		, m_widgetPicker("widget_picker", *this)
 		, m_gridTracksEditor("grid_tracks", *this)
-		, m_errorBox("layout_editor_error", *this, layout_t(0, 0, 50, 50))
 	{
 		ZoneScoped;
 		// This container only exists to host the toolbar and the drag ghost - every other piece of
@@ -472,11 +473,13 @@ namespace UI
 		auto validation = Layout::LayoutBuilder::validate(m_workingDoc);
 		if (!validation.ok)
 		{
-			m_errorBox.setTitle(_("layout_editor.save_failed_title"));
-			m_errorBox.setText(validation.errors.empty() ? "" : validation.errors[0]);
-			m_errorBox.cancelVisible(false);
-			m_errorBox.setOkCallback([this] { m_errorBox.close(); });
-			m_errorBox.open();
+			// Reuses the app's existing transient-notification mechanism (same one behind the
+			// Response/SuccessResponse/WarningResponse/ErrorResponse tests) rather than a modal
+			// dialog - simpler, and this path should be unreachable in practice anyway, since every
+			// mutation that reaches m_workingDoc already went through applyMutation()'s own
+			// validate-or-revert check.
+			HomeView::instance().getPresenter()->newResponse(
+				ResponseType::ERROR, validation.errors.empty() ? _("layout_editor.save_failed_title") : validation.errors[0]);
 			return;
 		}
 

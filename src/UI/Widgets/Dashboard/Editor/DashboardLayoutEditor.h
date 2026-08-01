@@ -10,7 +10,6 @@
 #include "GridTracksEditor.h"
 #include "UI/Components/Button/Button.h"
 #include "UI/Components/LVGL/LvContainer.h"
-#include "UI/Components/MessageBox/ModalMessageBox.h"
 #include "UI/Components/Modal/Modal.h"
 #include "UI/Layout/LayoutDocumentEditor.h"
 #include "WidgetPickerList.h"
@@ -133,11 +132,10 @@ namespace UI
 		Button m_gridBtn;
 
 		// Long-lived (constructed once, re-populated and re-opened as needed) rather than heap-
-		// allocated per use - matches how ModalNumberPad/ModalMessageBox are owned elsewhere in the
-		// app (e.g. HomeView's m_numberpad), and avoids a leak from an ephemeral modal with no owner.
+		// allocated per use - matches how ModalNumberPad is owned elsewhere in the app (e.g.
+		// HomeView's m_numberpad), and avoids a leak from an ephemeral modal with no owner.
 		Modal<WidgetPickerList> m_widgetPicker;
 		Modal<GridTracksEditor> m_gridTracksEditor;
-		ModalMessageBox m_errorBox;
 
 		// Every chrome object created since the last rebuildChrome() - std::deque so addresses stay
 		// stable while more are appended (matches LayoutInstance::m_owned's own reasoning).
