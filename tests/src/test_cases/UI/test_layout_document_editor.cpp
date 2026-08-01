@@ -92,14 +92,19 @@ TEST_F(TestLayoutDocumentEditor, MoveWidgetOntoAnotherWidgetsAnchorSwapsPosition
 		}
 	})");
 
+	// a2 (1x1) swaps with a1 (2x1): each fully adopts the other's former footprint, not just its cell
+	// - a2 becomes 2-wide at (0,0), a1 becomes 1-wide (its implicit default) at (2,0). This is the
+	// only swap semantics that's always grid-valid: keeping each widget's *own* original size while
+	// only swapping position could push a wide widget past the grid's edge (exactly what a1 moving
+	// to col=2 with its own colSpan=2 would do here - there is no col=3).
 	auto result = moveWidget(doc, "/root/children/1", 0, 0);
 	EXPECT_TRUE(result.ok) << result.error;
 	EXPECT_EQ(doc["root"]["children"][1]["col"], 0);
 	EXPECT_EQ(doc["root"]["children"][1]["row"], 0);
-	EXPECT_FALSE(doc["root"]["children"][1].contains("colSpan"));
+	EXPECT_EQ(doc["root"]["children"][1]["colSpan"], 2);
 	EXPECT_EQ(doc["root"]["children"][0]["col"], 2);
 	EXPECT_EQ(doc["root"]["children"][0]["row"], 0);
-	EXPECT_EQ(doc["root"]["children"][0]["colSpan"], 2);
+	EXPECT_FALSE(doc["root"]["children"][0].contains("colSpan"));
 	EXPECT_TRUE(LayoutBuilder::validate(doc, makeTestRegistry()).ok);
 }
 
@@ -117,7 +122,9 @@ TEST_F(TestLayoutDocumentEditor, MoveWidgetPartiallyOverlappingAThirdWidgetFails
 	})");
 	json before = doc;
 
-	auto result = moveWidget(doc, "/root/children/0", 1, 0);
+	// col=2 is inside a2's span (cols 1-2) but is not a2's *own* anchor (col=1) - not a clean swap
+	// target, since there's no single widget whose whole footprint could be exchanged for it.
+	auto result = moveWidget(doc, "/root/children/0", 2, 0);
 	EXPECT_FALSE(result.ok);
 	EXPECT_EQ(doc, before);
 }

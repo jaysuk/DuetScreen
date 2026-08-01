@@ -168,17 +168,13 @@ namespace UI::Layout
 			return {false, "widgetPath does not address a widget node"};
 		}
 
-		const int64_t colSpan = widget.value("colSpan", 1);
-		const int64_t rowSpan = widget.value("rowSpan", 1);
 		const int64_t colCount = trackCount(*parent, "cols");
 		const int64_t rowCount = trackCount(*parent, "rows");
-		if (col + colSpan > colCount || row + rowSpan > rowCount)
-		{
-			return {false, "target cell is outside the grid"};
-		}
 
 		// A swap happens when some *other* child's own (col, row) anchor exactly matches the target -
-		// otherwise the target cell must be entirely free for a plain move.
+		// otherwise the target cell must be entirely free for a plain move. Anything in between (the
+		// target lands only partially inside some larger widget's span) is rejected as ambiguous
+		// rather than guessed at.
 		std::optional<size_t> swapIndex;
 		for (size_t i = 0; i < children.size(); i++)
 		{
@@ -196,56 +192,66 @@ namespace UI::Layout
 
 		if (swapIndex)
 		{
+			// A full footprint exchange: each widget adopts the other's exact former col/row/colSpan/
+			// rowSpan. No overlap-with-a-third-widget check is needed - both footprints being traded
+			// were already valid, non-overlapping placements in the document as it stood before this
+			// call (the caller is expected to only ever pass an already-validated document in), so
+			// swapping which widget sits in each one can't newly conflict with anyone else.
 			nlohmann::json& other = children[*swapIndex];
-			auto occ = computeOccupancy(children);
-			// The two swap participants trivially "occupy" each other's cells - exclude both before
-			// checking that the swap doesn't newly overlap some *third* widget.
-			for (auto it = occ.begin(); it != occ.end();)
-			{
-				if (it->second == ref->index || it->second == *swapIndex)
-				{
-					it = occ.erase(it);
-				}
-				else
-				{
-					++it;
-				}
-			}
-
-			const int64_t otherColSpan = other.value("colSpan", 1);
-			const int64_t otherRowSpan = other.value("rowSpan", 1);
-			const int64_t otherCol = other.value("col", int64_t(0));
-			const int64_t otherRow = other.value("row", int64_t(0));
-			for (int64_t c = col; c < col + colSpan; c++)
-			{
-				for (int64_t r = row; r < row + rowSpan; r++)
-				{
-					if (occ.count({c, r}))
-					{
-						return {false, "target overlaps a third widget"};
-					}
-				}
-			}
-			for (int64_t c = otherCol; c < otherCol + otherColSpan; c++)
-			{
-				for (int64_t r = otherRow; r < otherRow + otherRowSpan; r++)
-				{
-					if (occ.count({c, r}))
-					{
-						return {false, "swap partner's vacated cell overlaps a third widget"};
-					}
-				}
-			}
-
 			const int64_t widgetOrigCol = widget.value("col", int64_t(0));
 			const int64_t widgetOrigRow = widget.value("row", int64_t(0));
-			other["col"] = widgetOrigCol;
-			other["row"] = widgetOrigRow;
+			const int64_t widgetColSpan = widget.value("colSpan", 1);
+			const int64_t widgetRowSpan = widget.value("rowSpan", 1);
+			const int64_t otherColSpan = other.value("colSpan", 1);
+			const int64_t otherRowSpan = other.value("rowSpan", 1);
+
 			widget["col"] = col;
 			widget["row"] = row;
+			if (otherColSpan == 1)
+			{
+				widget.erase("colSpan");
+			}
+			else
+			{
+				widget["colSpan"] = otherColSpan;
+			}
+			if (otherRowSpan == 1)
+			{
+				widget.erase("rowSpan");
+			}
+			else
+			{
+				widget["rowSpan"] = otherRowSpan;
+			}
+
+			other["col"] = widgetOrigCol;
+			other["row"] = widgetOrigRow;
+			if (widgetColSpan == 1)
+			{
+				other.erase("colSpan");
+			}
+			else
+			{
+				other["colSpan"] = widgetColSpan;
+			}
+			if (widgetRowSpan == 1)
+			{
+				other.erase("rowSpan");
+			}
+			else
+			{
+				other["rowSpan"] = widgetRowSpan;
+			}
 		}
 		else
 		{
+			const int64_t colSpan = widget.value("colSpan", 1);
+			const int64_t rowSpan = widget.value("rowSpan", 1);
+			if (col + colSpan > colCount || row + rowSpan > rowCount)
+			{
+				return {false, "target cell is outside the grid"};
+			}
+
 			auto occ = computeOccupancy(children, ref->index);
 			for (int64_t c = col; c < col + colSpan; c++)
 			{
