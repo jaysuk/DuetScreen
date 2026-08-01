@@ -34,6 +34,8 @@ namespace UI
 		addEventCallback([this](lv_event_t*) { enterEditMode(); }, LV_EVENT_LONG_PRESSED);
 	}
 
+	Dashboard::~Dashboard() = default;
+
 	void Dashboard::enterEditMode()
 	{
 		ZoneScoped;

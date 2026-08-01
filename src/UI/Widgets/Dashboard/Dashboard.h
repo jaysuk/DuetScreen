@@ -33,6 +33,12 @@ namespace UI
 	{
 	  public:
 		Dashboard(const std::string& name, LvObj& parent);
+		// Declared (not defaulted inline) because m_editor is a unique_ptr<DashboardLayoutEditor>,
+		// which is only forward-declared here - the destructor needs DashboardLayoutEditor's complete
+		// type, available in Dashboard.cpp but not to every translation unit that includes this
+		// header (e.g. HomeView.h, which embeds a Dashboard member and would otherwise need to
+		// instantiate ~Dashboard() itself with only the forward declaration in scope).
+		~Dashboard();
 
 		ToolList* getToolList() { return static_cast<ToolList*>(m_layout->find("tool_list")); }
 		TemperatureGraph* getGraph() { return static_cast<TemperatureGraph*>(m_layout->find("temperature_graph")); }
