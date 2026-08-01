@@ -679,7 +679,7 @@ TEST_F(TestHomeViewWithData, StatusView)
 
 	UI::closeAllModals();
 
-	UI::LvObj* extrusion_factor = statusView.getChildByName("print_info.flow_cont.flow_multiplier");
+	UI::LvObj* extrusion_factor = statusView->getChildByName("print_info.flow_cont.flow_multiplier");
 	ASSERT_NE(extrusion_factor, nullptr);
 	extrusion_factor->sendEvent(LV_EVENT_CLICKED, nullptr);
 	OM::Move::SetExtruderFactor(0, 1.2f);
@@ -688,7 +688,7 @@ TEST_F(TestHomeViewWithData, StatusView)
 
 	UI::closeAllModals();
 
-	UI::LvObj* babystep = statusView.getChildByName("print_info.babystep_cont.babystep_button");
+	UI::LvObj* babystep = statusView->getChildByName("print_info.babystep_cont.babystep_button");
 	ASSERT_NE(babystep, nullptr);
 	babystep->sendEvent(LV_EVENT_CLICKED, nullptr);
 	EXPECT_EQUAL_SCREENSHOT("home_view/status_view/babystep_modal.png")
