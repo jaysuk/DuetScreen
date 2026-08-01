@@ -21,27 +21,37 @@ namespace UI
 {
 	/**
 	 * @brief The dashboard's composition is data-driven - see assets/layouts/ and
-	 * docs/LAYOUT_ENGINE_DESIGN.md. The user can pick from a curated set of shipped presets (Settings
-	 * > Display > Layout), each fixed and known-good, but not every preset contains every widget (see
-	 * assets/layouts/minimal.json). The accessors below still return concrete references rather than
-	 * becoming nullable, because every widget *except* tool_list/temperature_graph is present in
-	 * every preset shipped today - see the comment on m_layout for how those two are handled. Once
-	 * layouts are genuinely user-*editable*, rather than a choice between fixed presets, this
-	 * guarantee stops holding for everything and these will need to change.
+	 * docs/LAYOUT_ENGINE_DESIGN.md. The user can pick a shipped preset (Settings > Display > Layout)
+	 * or, from Phase 5 on, edit a layout freely (Settings > Display > Edit Layout, or long-press the
+	 * dashboard) - so any widget, including the tabs container and its jobs/status tabs, may be
+	 * absent from the current document. Every accessor below is therefore pointer-returning and may
+	 * return nullptr; callers must check before use.
 	 */
 	class Dashboard : public View<DashboardPresenter>
 	{
 	  public:
 		Dashboard(const std::string& name, LvObj& parent);
 
-		ToolList& getToolList() { return static_cast<ToolList&>(*m_layout->find("tool_list")); }
-		TemperatureGraph& getGraph() { return static_cast<TemperatureGraph&>(*m_layout->find("temperature_graph")); }
-		TabView& getTabs() { return static_cast<TabView&>(*m_layout->find("tabs")); }
-		FileView& getFileView() { return static_cast<FileView&>(*m_layout->find("jobs")); }
-		StatusView& getStatusView() { return static_cast<StatusView&>(*m_layout->find("status")); }
+		ToolList* getToolList() { return static_cast<ToolList*>(m_layout->find("tool_list")); }
+		TemperatureGraph* getGraph() { return static_cast<TemperatureGraph*>(m_layout->find("temperature_graph")); }
+		TabView* getTabs() { return static_cast<TabView*>(m_layout->find("tabs")); }
+		FileView* getFileView() { return static_cast<FileView*>(m_layout->find("jobs")); }
+		StatusView* getStatusView() { return static_cast<StatusView*>(m_layout->find("status")); }
 
-		void showJobsTab() { getTabs().setActiveTabById("jobs"); }
-		void showStatusTab() { getTabs().setActiveTabById("status"); }
+		void showJobsTab()
+		{
+			if (TabView* tabs = getTabs())
+			{
+				tabs->setActiveTabById("jobs");
+			}
+		}
+		void showStatusTab()
+		{
+			if (TabView* tabs = getTabs())
+			{
+				tabs->setActiveTabById("status");
+			}
+		}
 		void disableJobsTab(bool disable);
 
 		void setNumberPad(ModalNumberPad* np);
@@ -63,11 +73,14 @@ namespace UI
 		void onHide() override;
 
 	  private:
-		// tool_list/temperature_graph are the only widgets a shipped preset may omit (see
-		// assets/layouts/minimal.json) - clear()/onHide() are the only places that touch them
-		// outside the accessors above, so they're the only places that need to tolerate absence.
-		// The accessors themselves stay reference-returning (see the class comment) because every
-		// *other* widget they look up is present in every preset shipped today.
+		// Re-applies configuration that was set via setNumberPad()/disableJobsTab() while the target
+		// widget didn't exist, or that a widget rebuilt from scratch (a fresh TabView/StatusView has
+		// no memory of what the previous instance was told) needs re-telling. Called at the end of
+		// every rebuild (reload(), and later the layout editor's preview rebuilds).
+		void applyPendingConfiguration();
+
 		std::unique_ptr<Layout::LayoutInstance> m_layout;
+		ModalNumberPad* m_pendingNumberPad = nullptr;
+		bool m_jobsTabDisabled = false;
 	};
 } // namespace UI

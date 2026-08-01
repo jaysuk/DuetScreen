@@ -55,21 +55,42 @@ namespace UI
 		m_layout.reset();
 		m_layout = std::move(newLayout);
 
-		/* Tabs (Jobs & Status) */
-		getTabs().setActiveTabById("jobs");
+		applyPendingConfiguration();
 		return true;
+	}
+
+	void Dashboard::applyPendingConfiguration()
+	{
+		ZoneScoped;
+		if (TabView* tabs = getTabs())
+		{
+			tabs->setActiveTabById("jobs");
+			tabs->disableTabById("jobs", m_jobsTabDisabled);
+		}
+		if (StatusView* status = getStatusView())
+		{
+			status->setNumberPad(m_pendingNumberPad);
+		}
 	}
 
 	void Dashboard::disableJobsTab(bool disable)
 	{
 		ZoneScoped;
-		getTabs().disableTabById("jobs", disable);
+		m_jobsTabDisabled = disable;
+		if (TabView* tabs = getTabs())
+		{
+			tabs->disableTabById("jobs", disable);
+		}
 	}
 
 	void Dashboard::setNumberPad(ModalNumberPad* np)
 	{
 		ZoneScoped;
-		getStatusView().setNumberPad(np);
+		m_pendingNumberPad = np;
+		if (StatusView* status = getStatusView())
+		{
+			status->setNumberPad(np);
+		}
 	}
 
 	void Dashboard::clear()

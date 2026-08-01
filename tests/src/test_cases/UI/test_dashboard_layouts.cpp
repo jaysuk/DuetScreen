@@ -66,24 +66,30 @@ TEST_F(TestDashboardLayouts, DefaultLayoutHasToolListAndGraph)
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
 	Dashboard dashboard("dashboard", screen);
 
-	EXPECT_TRUE(dashboard.getToolList().isValid());
-	EXPECT_TRUE(dashboard.getGraph().isValid());
-	EXPECT_TRUE(dashboard.getFileView().isValid());
-	EXPECT_TRUE(dashboard.getStatusView().isValid());
+	ASSERT_NE(dashboard.getToolList(), nullptr);
+	ASSERT_NE(dashboard.getGraph(), nullptr);
+	ASSERT_NE(dashboard.getFileView(), nullptr);
+	ASSERT_NE(dashboard.getStatusView(), nullptr);
+	EXPECT_TRUE(dashboard.getToolList()->isValid());
+	EXPECT_TRUE(dashboard.getGraph()->isValid());
+	EXPECT_TRUE(dashboard.getFileView()->isValid());
+	EXPECT_TRUE(dashboard.getStatusView()->isValid());
 }
 
 TEST_F(TestDashboardLayouts, ReloadSwitchesToADifferentLayout)
 {
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
 	Dashboard dashboard("dashboard", screen);
-	ASSERT_TRUE(dashboard.getToolList().isValid());
+	ASSERT_NE(dashboard.getToolList(), nullptr);
+	ASSERT_TRUE(dashboard.getToolList()->isValid());
 
 	// big_temps.json has tool_list too, so this stays safe to call afterwards - it exercises the
 	// "swap between two layouts that both use a widget" path without touching the old (by then
 	// destroyed) tree at all.
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("big_temps.json"));
 	EXPECT_TRUE(dashboard.reload());
-	EXPECT_TRUE(dashboard.getToolList().isValid());
+	ASSERT_NE(dashboard.getToolList(), nullptr);
+	EXPECT_TRUE(dashboard.getToolList()->isValid());
 }
 
 TEST_F(TestDashboardLayouts, MinimalLayoutOmitsToolListAndGraphButKeepsTabs)
@@ -91,11 +97,15 @@ TEST_F(TestDashboardLayouts, MinimalLayoutOmitsToolListAndGraphButKeepsTabs)
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("minimal.json"));
 	Dashboard dashboard("dashboard", screen);
 
-	// Minimal deliberately has no tool_list/temperature_graph - calling getToolList()/getGraph()
-	// here would dereference a null find() result, so this test never calls them. It only checks
-	// the widgets every shipped preset has.
-	EXPECT_TRUE(dashboard.getFileView().isValid());
-	EXPECT_TRUE(dashboard.getStatusView().isValid());
+	// Minimal deliberately has no tool_list/temperature_graph - this test only checks the widgets
+	// every shipped preset has, and now that the accessors are pointer-returning, getToolList()/
+	// getGraph() would simply return nullptr here rather than needing special avoidance.
+	EXPECT_EQ(dashboard.getToolList(), nullptr);
+	EXPECT_EQ(dashboard.getGraph(), nullptr);
+	ASSERT_NE(dashboard.getFileView(), nullptr);
+	ASSERT_NE(dashboard.getStatusView(), nullptr);
+	EXPECT_TRUE(dashboard.getFileView()->isValid());
+	EXPECT_TRUE(dashboard.getStatusView()->isValid());
 }
 
 TEST_F(TestDashboardLayouts, ClearToleratesALayoutWithNoToolListOrGraph)
@@ -117,5 +127,6 @@ TEST_F(TestDashboardLayouts, ReloadWithUnknownFileFailsAndKeepsCurrentLayout)
 	EXPECT_FALSE(dashboard.reload());
 
 	// A failed reload() must leave the old (still fully valid) layout completely untouched.
-	EXPECT_TRUE(dashboard.getToolList().isValid());
+	ASSERT_NE(dashboard.getToolList(), nullptr);
+	EXPECT_TRUE(dashboard.getToolList()->isValid());
 }

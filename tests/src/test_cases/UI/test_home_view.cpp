@@ -514,19 +514,22 @@ TEST_F(TestHomeViewWithData, Dashboard)
 	/* Populate graph with fake sensor data */
 	auto sensor = OM::GetAnalogSensorBySlot(0);
 	sensor->lastReading = 25.0f;
+	TemperatureGraph* graph = view.getDashboard().getGraph();
+	ASSERT_NE(graph, nullptr);
 	for (size_t i = 0; i < 1000; i++)
 	{
-		view.getDashboard().getGraph().getPresenter()->tick();
+		graph->getPresenter()->tick();
 		sensor->lastReading = (int32_t)(sensor->lastReading + 1) % 300;
 	}
 
-	view.getDashboard().getGraph().showSeries(1, false);
+	graph->showSeries(1, false);
 
 	EXPECT_EQUAL_SCREENSHOT("home_view/dashboard/temperature_graph.png");
 
 	/* Open the tool list numberpad */
-	view.getDashboard().getToolList().getTool(0)->getHeater(0)->getChildByName("active")->sendEvent(LV_EVENT_CLICKED,
-																									nullptr);
+	ToolList* toolList = view.getDashboard().getToolList();
+	ASSERT_NE(toolList, nullptr);
+	toolList->getTool(0)->getHeater(0)->getChildByName("active")->sendEvent(LV_EVENT_CLICKED, nullptr);
 	EXPECT_EQUAL_SCREENSHOT("home_view/dashboard/tool_list_numberpad.png");
 
 	UI::closeAllModals();
@@ -666,9 +669,10 @@ TEST_F(TestHomeViewWithData, StatusView)
 	view.getDashboard().showStatusTab();
 	EXPECT_EQUAL_SCREENSHOT("home_view/status_view/printing.png")
 
-	auto& statusView = view.getDashboard().getStatusView();
+	StatusView* statusView = view.getDashboard().getStatusView();
+	ASSERT_NE(statusView, nullptr);
 
-	UI::LvObj* speed_factor = statusView.getChildByName("print_info.speed_cont.speed_multiplier");
+	UI::LvObj* speed_factor = statusView->getChildByName("print_info.speed_cont.speed_multiplier");
 	ASSERT_NE(speed_factor, nullptr);
 	speed_factor->sendEvent(LV_EVENT_CLICKED, nullptr);
 	EXPECT_EQUAL_SCREENSHOT("home_view/status_view/speed_factor_numberpad.png")
