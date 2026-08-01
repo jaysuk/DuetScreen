@@ -722,6 +722,10 @@ namespace UI
 				}
 			}
 		}
+
+		createRow("", m_editLayoutBtn);
+		m_editLayoutBtn.setText(_("settings.edit_layout"));
+		m_editLayoutBtn.addClickedCallback([](lv_event_t*) { HomeView::instance().getDashboard().enterEditMode(); });
 	}
 
 	void DisplaySettings::updateThemePreview()

@@ -7,6 +7,7 @@
 
 #include "Dashboard.h"
 #include "Debug.h"
+#include "Editor/DashboardLayoutEditor.h"
 #include "Storage.h"
 #include "UI/Layout/DashboardWidgets.h"
 #include "UI/Layout/LayoutLoader.h"
@@ -29,6 +30,18 @@ namespace UI
 			// Unlike a later reload() failure, there's no already-built layout to fall back to here.
 			LOG_FATAL_THROW("Failed to build the initial dashboard layout");
 		}
+
+		addEventCallback([this](lv_event_t*) { enterEditMode(); }, LV_EVENT_LONG_PRESSED);
+	}
+
+	void Dashboard::enterEditMode()
+	{
+		ZoneScoped;
+		if (!m_editor)
+		{
+			m_editor = std::make_unique<DashboardLayoutEditor>("layout_editor", *this, *this);
+		}
+		m_editor->enter();
 	}
 
 	bool Dashboard::reload()

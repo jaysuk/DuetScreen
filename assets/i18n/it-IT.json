@@ -25,7 +25,9 @@
       "no": "No",
       "ok": "Ok",
       "cancel": "Annulla",
-      "close": "Chiudi"
+      "close": "Chiudi",
+      "save": "Save",
+      "remove": "Remove"
     },
     "connection_method": {
       "network": "Rete",
@@ -300,6 +302,7 @@
         "text": "Il cambio di lingua richiede un riavvio. Continuare?"
       },
       "layout": "Layout",
+      "edit_layout": "Edit Layout",
       "notification_auto_close_error": "Non chiudere automaticamente i messaggi di errore:",
       "notification_level": "Livello di notifica:",
       "notification_timeout": "Timeout notifiche (ms):",
@@ -362,6 +365,16 @@
         "warning": "Avviso",
         "error": "Errore"
       }
+    },
+    "layout_editor": { /* On-screen dashboard layout editor */
+      "reset_to_default": "Reset to Default",
+      "grid": "Grid",
+      "add": "+",
+      "columns": "Columns",
+      "rows": "Rows",
+      "cycle_size": "Size",
+      "add_track": "+ Add",
+      "save_failed_title": "Can't Save Layout"
     },
     "side_bar": {
       "back": "Indietro",

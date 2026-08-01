@@ -19,6 +19,8 @@
 
 namespace UI
 {
+	class DashboardLayoutEditor;
+
 	/**
 	 * @brief The dashboard's composition is data-driven - see assets/layouts/ and
 	 * docs/LAYOUT_ENGINE_DESIGN.md. The user can pick a shipped preset (Settings > Display > Layout)
@@ -85,6 +87,12 @@ namespace UI
 		/// right LvObj. nullptr if `id` isn't in the current tree.
 		LvObj* findWidget(std::string_view id) { return m_layout->find(id); }
 
+		/// Enters the on-screen layout editor (long-press the dashboard, or Settings > Display >
+		/// Edit Layout). The editor is constructed lazily on first use, not in Dashboard's own
+		/// constructor - most Dashboard instances (every existing test, in particular) never enter
+		/// edit mode, and it pulls in two Modal instances plus a toolbar's worth of buttons.
+		void enterEditMode();
+
 	  protected:
 		void onHide() override;
 
@@ -105,5 +113,6 @@ namespace UI
 		nlohmann::json m_currentDoc;
 		ModalNumberPad* m_pendingNumberPad = nullptr;
 		bool m_jobsTabDisabled = false;
+		std::unique_ptr<DashboardLayoutEditor> m_editor;
 	};
 } // namespace UI

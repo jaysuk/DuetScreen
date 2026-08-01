@@ -122,6 +122,7 @@ namespace UI
 		DropdownMenu m_screenRotation{"screen_rotation", getRoot()};
 		DropdownMenu m_layout{"layout", getRoot()};
 		std::vector<std::string> m_layoutFiles; // parallel to m_layout's options, by dropdown index
+		Button m_editLayoutBtn{"edit_layout", getRoot()};
 	};
 
 	class DeveloperSettings : public View<DeveloperSettingsPresenter, SettingsTab>

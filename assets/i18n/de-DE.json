@@ -25,7 +25,9 @@
       "no": "Nein",
       "ok": "Ok",
       "cancel": "Abbrechen",
-      "close": "Schließen"
+      "close": "Schließen",
+      "save": "Save",
+      "remove": "Remove"
     },
     "connection_method": {
       "network": "Netzwerk",
@@ -300,6 +302,7 @@
         "text": "Das Ändern der Sprache erfordert einen Neustart. Fortfahren?"
       },
       "layout": "Layout",
+      "edit_layout": "Edit Layout",
       "notification_auto_close_error": "Fehlermeldungen nicht automatisch schließen:",
       "notification_level": "Benachrichtigungsstufe:",
       "notification_timeout": "Benachrichtigungs-Timeout (ms):",
@@ -362,6 +365,16 @@
         "warning": "Warnung",
         "error": "Fehler"
       }
+    },
+    "layout_editor": { /* On-screen dashboard layout editor */
+      "reset_to_default": "Reset to Default",
+      "grid": "Grid",
+      "add": "+",
+      "columns": "Columns",
+      "rows": "Rows",
+      "cycle_size": "Size",
+      "add_track": "+ Add",
+      "save_failed_title": "Can't Save Layout"
     },
     "side_bar": {
       "back": "Zurück",

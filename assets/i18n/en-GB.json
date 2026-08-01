@@ -26,7 +26,9 @@
       "no": "No",
       "ok": "Ok",
       "cancel": "Cancel",
-      "close": "Close"
+      "close": "Close",
+      "save": "Save",
+      "remove": "Remove"
     },
     "connection_method": { /* Duet connection methods */
       "network": "Network",
@@ -300,6 +302,7 @@
         "text": "Changing the language requires a restart. Continue?"
       },
       "layout": "Layout",
+      "edit_layout": "Edit Layout",
       "notification_auto_close_error": "Do not close error messages automatically:",
       "notification_level": "Notification Level:",
       "notification_timeout": "Notification Timeout (ms):",
@@ -363,6 +366,16 @@
         "warning": "Warning",
         "error": "Error"
       }
+    },
+    "layout_editor": { /* On-screen dashboard layout editor */
+      "reset_to_default": "Reset to Default",
+      "grid": "Grid",
+      "add": "+",
+      "columns": "Columns",
+      "rows": "Rows",
+      "cycle_size": "Size",
+      "add_track": "+ Add",
+      "save_failed_title": "Can't Save Layout"
     },
     "side_bar": { /* Side bar buttons */
       "back": "Back",

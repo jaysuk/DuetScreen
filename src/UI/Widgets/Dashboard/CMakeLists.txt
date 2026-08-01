@@ -3,4 +3,7 @@ target_sources(
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/Dashboard.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DashboardPresenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Editor/DashboardLayoutEditor.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Editor/WidgetPickerList.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Editor/GridTracksEditor.cpp
 )

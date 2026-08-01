@@ -25,7 +25,9 @@
       "no": "Nee",
       "ok": "Ok",
       "cancel": "Annuleren",
-      "close": "Sluiten"
+      "close": "Sluiten",
+      "save": "Save",
+      "remove": "Remove"
     },
     "connection_method": {
       "network": "Netwerk",
@@ -300,6 +302,7 @@
         "text": "Het wijzigen van de taal vereist een herstart. Doorgaan?"
       },
       "layout": "Lay-out",
+      "edit_layout": "Edit Layout",
       "notification_auto_close_error": "Foutmeldingen niet automatisch sluiten:",
       "notification_level": "Meldingsniveau:",
       "notification_timeout": "Meldingstime-out (ms):",
@@ -362,6 +365,16 @@
         "warning": "Waarschuwing",
         "error": "Fout"
       }
+    },
+    "layout_editor": { /* On-screen dashboard layout editor */
+      "reset_to_default": "Reset to Default",
+      "grid": "Grid",
+      "add": "+",
+      "columns": "Columns",
+      "rows": "Rows",
+      "cycle_size": "Size",
+      "add_track": "+ Add",
+      "save_failed_title": "Can't Save Layout"
     },
     "side_bar": {
       "back": "Terug",
