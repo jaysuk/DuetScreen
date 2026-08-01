@@ -130,3 +130,65 @@ TEST_F(TestDashboardLayouts, ReloadWithUnknownFileFailsAndKeepsCurrentLayout)
 	ASSERT_NE(dashboard.getToolList(), nullptr);
 	EXPECT_TRUE(dashboard.getToolList()->isValid());
 }
+
+TEST_F(TestDashboardLayouts, SaveAndLoadCustomLayoutDocumentRoundTrips)
+{
+	nlohmann::json doc = nlohmann::json::parse(R"({
+		"schema": 1,
+		"name": "My Custom Layout",
+		"root": { "widget": "status", "id": "status" }
+	})");
+
+	Layout::saveCustomLayoutDocument(doc);
+	auto loaded = Layout::loadCustomLayoutDocument();
+	ASSERT_TRUE(loaded.has_value());
+	EXPECT_EQ(*loaded, doc);
+}
+
+TEST_F(TestDashboardLayouts, ReloadWithCustomLayoutSentinelLoadsTheStoredDocument)
+{
+	nlohmann::json doc = nlohmann::json::parse(R"({
+		"schema": 1,
+		"root": { "widget": "status", "id": "status" }
+	})");
+	Layout::saveCustomLayoutDocument(doc);
+
+	StorageHelper::setData(ID_LAYOUT_FILE, Layout::CUSTOM_LAYOUT_SENTINEL);
+	Dashboard dashboard("dashboard", screen);
+
+	ASSERT_NE(dashboard.getStatusView(), nullptr);
+	EXPECT_TRUE(dashboard.getStatusView()->isValid());
+	EXPECT_EQ(dashboard.getCurrentDocument(), doc);
+}
+
+TEST_F(TestDashboardLayouts, PreviewDocumentBuildsWithoutTouchingStorage)
+{
+	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
+	Dashboard dashboard("dashboard", screen);
+	ASSERT_NE(dashboard.getToolList(), nullptr);
+
+	nlohmann::json doc = nlohmann::json::parse(R"({
+		"schema": 1,
+		"root": { "widget": "status", "id": "status" }
+	})");
+	EXPECT_TRUE(dashboard.previewDocument(doc));
+	EXPECT_EQ(dashboard.getToolList(), nullptr);
+	ASSERT_NE(dashboard.getStatusView(), nullptr);
+	EXPECT_TRUE(dashboard.getStatusView()->isValid());
+	EXPECT_EQ(dashboard.getCurrentDocument(), doc);
+
+	// previewDocument() never touches Storage - ID_LAYOUT_FILE still names the on-disk preset.
+	EXPECT_EQ(StorageHelper::getData(ID_LAYOUT_FILE), "default.json");
+}
+
+TEST_F(TestDashboardLayouts, PreviewDocumentWithInvalidDocumentFailsAndKeepsCurrentLayout)
+{
+	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
+	Dashboard dashboard("dashboard", screen);
+
+	nlohmann::json badDoc = nlohmann::json::parse(R"({ "schema": 1, "root": { "widget": "does_not_exist" } })");
+	EXPECT_FALSE(dashboard.previewDocument(badDoc));
+
+	ASSERT_NE(dashboard.getToolList(), nullptr);
+	EXPECT_TRUE(dashboard.getToolList()->isValid());
+}
