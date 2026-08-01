@@ -54,6 +54,7 @@ constexpr StorageKey<std::string_view> ID_THEME = {"ui:theme", "duetscreen"};
 constexpr StorageKey<std::string_view> ID_FONT = {"ui:font", "OpenSans"};
 constexpr StorageKey<std::string_view> ID_ICON_FOLDER = {"ui:icon_folder", DEFAULT_ICON_SET};
 constexpr StorageKey<std::string_view> ID_LAYOUT_FILE = {"ui:layout_file", "default.json"};
+constexpr StorageKey<nlohmann::json> ID_CUSTOM_LAYOUT = {"ui:custom_layout", nlohmann::json::object()};
 constexpr StorageKey<std::string_view> ID_KEYBOARD_LAYOUT = {"ui:keyboard_layout", "us"};
 constexpr StorageKey<bool> ID_UI_ANIMATIONS_ENABLED = {"ui:animations_enabled", true};
 constexpr StorageKey<DisplayRotation> ID_DISPLAY_ROTATION = {"ui:display_rotation", DisplayRotation::ROTATION_0};

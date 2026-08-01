@@ -153,6 +153,7 @@ extern const StorageKey<std::string_view> ID_THEME;
 extern const StorageKey<std::string_view> ID_FONT;
 extern const StorageKey<std::string_view> ID_ICON_FOLDER;
 extern const StorageKey<std::string_view> ID_LAYOUT_FILE;
+extern const StorageKey<nlohmann::json> ID_CUSTOM_LAYOUT;
 extern const StorageKey<std::string_view> ID_KEYBOARD_LAYOUT;
 extern const StorageKey<bool> ID_UI_ANIMATIONS_ENABLED;
 extern const StorageKey<DisplayRotation> ID_DISPLAY_ROTATION;
