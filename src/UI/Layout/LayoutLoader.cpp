@@ -7,6 +7,8 @@
 
 #include "LayoutLoader.h"
 #include "Debug.h"
+#include "Storage.h"
+#include "utils/StorageHelper.h"
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -76,5 +78,33 @@ namespace UI::Layout
 
 		std::sort(layouts.begin(), layouts.end(), [](const LayoutInfo& a, const LayoutInfo& b) { return a.file < b.file; });
 		return layouts;
+	}
+
+	std::optional<nlohmann::json> loadCustomLayoutDocument()
+	{
+		ZoneScoped;
+		const std::string_view raw = StorageHelper::getData(ID_CUSTOM_LAYOUT);
+		if (raw.empty())
+		{
+			LOG_ERROR("No custom layout document is stored");
+			return std::nullopt;
+		}
+
+		try
+		{
+			return nlohmann::json::parse(raw, /* callback */ nullptr, /* allow_exceptions */ true,
+										 /* ignore_comments */ true);
+		}
+		catch (const std::exception& e)
+		{
+			LOG_ERROR("Failed to parse stored custom layout document: {:s}", e.what());
+			return std::nullopt;
+		}
+	}
+
+	void saveCustomLayoutDocument(const nlohmann::json& doc)
+	{
+		ZoneScoped;
+		StorageHelper::setData(ID_CUSTOM_LAYOUT, doc.dump());
 	}
 } // namespace UI::Layout

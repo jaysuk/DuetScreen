@@ -36,17 +36,30 @@ namespace UI
 		ZoneScoped;
 		const std::string_view layoutFile = StorageHelper::getData(ID_LAYOUT_FILE);
 
-		std::optional<nlohmann::json> doc = Layout::loadLayoutDocument(layoutFile);
+		std::optional<nlohmann::json> doc = (layoutFile == Layout::CUSTOM_LAYOUT_SENTINEL)
+												 ? Layout::loadCustomLayoutDocument()
+												 : Layout::loadLayoutDocument(layoutFile);
 		if (!doc)
 		{
 			LOG_ERROR("Failed to load dashboard layout '{:s}', keeping the current one", layoutFile);
 			return false;
 		}
+		return buildAndInstall(*doc, layoutFile);
+	}
 
-		std::unique_ptr<Layout::LayoutInstance> newLayout = Layout::LayoutBuilder::build(*doc, *this);
+	bool Dashboard::previewDocument(const nlohmann::json& doc)
+	{
+		ZoneScoped;
+		return buildAndInstall(doc, "editor preview");
+	}
+
+	bool Dashboard::buildAndInstall(const nlohmann::json& doc, std::string_view logLabel)
+	{
+		ZoneScoped;
+		std::unique_ptr<Layout::LayoutInstance> newLayout = Layout::LayoutBuilder::build(doc, *this);
 		if (!newLayout)
 		{
-			LOG_ERROR("Failed to build dashboard layout '{:s}', keeping the current one", layoutFile);
+			LOG_ERROR("Failed to build dashboard layout '{:s}', keeping the current one", logLabel);
 			return false;
 		}
 
@@ -54,6 +67,7 @@ namespace UI
 		// View<Presenter>'s destructor unbinds each widget's presenter from the Model as it goes.
 		m_layout.reset();
 		m_layout = std::move(newLayout);
+		m_currentDoc = doc;
 
 		applyPendingConfiguration();
 		return true;

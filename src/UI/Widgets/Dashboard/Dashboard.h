@@ -69,17 +69,34 @@ namespace UI
 		 */
 		bool reload();
 
+		/// The document last successfully built (whichever of reload()'s or previewDocument()'s
+		/// documents that was) - the layout editor reads this to seed the document it's editing.
+		const nlohmann::json& getCurrentDocument() const { return m_currentDoc; }
+
+		/// Rebuilds the dashboard from `doc` directly, without touching Storage - used by the layout
+		/// editor to preview an in-progress edit before it's saved. Same fallback behaviour as
+		/// reload(): returns false and leaves the current layout in place if `doc` fails to
+		/// validate/build.
+		bool previewDocument(const nlohmann::json& doc);
+
 	  protected:
 		void onHide() override;
 
 	  private:
+		// Shared by reload() and previewDocument(): validates+builds `doc`, and on success swaps it
+		// in as m_layout/m_currentDoc and re-applies pending configuration. `logLabel` is just for the
+		// error message on failure (reload() passes the layout filename, previewDocument() a fixed
+		// label, since there's no file involved).
+		bool buildAndInstall(const nlohmann::json& doc, std::string_view logLabel);
+
 		// Re-applies configuration that was set via setNumberPad()/disableJobsTab() while the target
 		// widget didn't exist, or that a widget rebuilt from scratch (a fresh TabView/StatusView has
 		// no memory of what the previous instance was told) needs re-telling. Called at the end of
-		// every rebuild (reload(), and later the layout editor's preview rebuilds).
+		// every rebuild (reload(), and the layout editor's preview rebuilds).
 		void applyPendingConfiguration();
 
 		std::unique_ptr<Layout::LayoutInstance> m_layout;
+		nlohmann::json m_currentDoc;
 		ModalNumberPad* m_pendingNumberPad = nullptr;
 		bool m_jobsTabDisabled = false;
 	};

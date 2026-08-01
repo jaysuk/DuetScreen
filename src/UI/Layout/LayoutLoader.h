@@ -41,4 +41,18 @@ namespace UI::Layout
 	 * bad file shouldn't stop the rest from being offered.
 	 */
 	std::vector<LayoutInfo> getAvailableLayouts();
+
+	/// The reserved ID_LAYOUT_FILE value meaning "load/save via ID_CUSTOM_LAYOUT in Storage instead
+	/// of a file in the layouts asset folder" - deliberately not ".json"-suffixed so it can never
+	/// collide with a real shipped preset's filename.
+	inline constexpr std::string_view CUSTOM_LAYOUT_SENTINEL = "__custom__";
+
+	/// Parses the document currently stored under ID_CUSTOM_LAYOUT (see Storage.h - stored as
+	/// serialized JSON text, since StorageKey's default value must be consteval-constructible and
+	/// nlohmann::json isn't a literal type). std::nullopt if it's unset/empty or fails to parse - the
+	/// reason is logged either way, matching loadLayoutDocument().
+	std::optional<nlohmann::json> loadCustomLayoutDocument();
+
+	/// Serializes `doc` and persists it under ID_CUSTOM_LAYOUT.
+	void saveCustomLayoutDocument(const nlohmann::json& doc);
 } // namespace UI::Layout
