@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Hardware/Duet.h"
+#include "LayoutImportPickerList.h"
 #include "SettingsPresenter.h"
 #include "UI/Components/Button/Button.h"
 #include "UI/Components/Containers/TabView.h"
@@ -14,6 +15,7 @@
 #include "UI/Components/Modal/Modal.h"
 #include "UI/Components/Theme/ThemePreview.h"
 #include "UI/Core/View.h"
+#include "UI/Layout/LayoutFileTransfer.h"
 #include "UI/Widgets/HardwareTest/HardwareTest.h"
 #include "UI/Widgets/Network/WifiSelector.h"
 #include "i18n/i18n.h"
@@ -123,6 +125,10 @@ namespace UI
 		DropdownMenu m_layout{"layout", getRoot()};
 		std::vector<std::string> m_layoutFiles; // parallel to m_layout's options, by dropdown index
 		Button m_editLayoutBtn{"edit_layout", getRoot()};
+		Button m_exportLayoutBtn{"export_layout", getRoot()};
+		Button m_importLayoutBtn{"import_layout", getRoot()};
+		Modal<LayoutImportPickerList> m_importPicker{"import_picker", getRoot()};
+		std::vector<Layout::ImportCandidate> m_importCandidates;
 	};
 
 	class DeveloperSettings : public View<DeveloperSettingsPresenter, SettingsTab>

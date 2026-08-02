@@ -726,6 +726,66 @@ namespace UI
 		createRow("", m_editLayoutBtn);
 		m_editLayoutBtn.setText(_("settings.edit_layout"));
 		m_editLayoutBtn.addClickedCallback([](lv_event_t*) { HomeView::instance().getDashboard().enterEditMode(); });
+
+		createRow("", m_exportLayoutBtn);
+		m_exportLayoutBtn.setText(_("settings.export_layout"));
+		m_exportLayoutBtn.addClickedCallback(
+			[](lv_event_t*)
+			{
+				auto usbRoot = Layout::findMountedUsbDrive();
+				if (!usbRoot)
+				{
+					HomeView::instance().getPresenter()->newResponse(ResponseType::ERROR, _("settings.no_usb_drive"));
+					return;
+				}
+				auto filename =
+					Layout::exportLayoutToUsb(HomeView::instance().getDashboard().getCurrentDocument(), *usbRoot);
+				if (!filename)
+				{
+					HomeView::instance().getPresenter()->newResponse(ResponseType::ERROR,
+																	  _("settings.export_layout_failed"));
+					return;
+				}
+				HomeView::instance().getPresenter()->newResponse(
+					ResponseType::SUCCESS, _("settings.export_layout_succeeded", *filename));
+			});
+
+		createRow("", m_importLayoutBtn);
+		m_importLayoutBtn.setText(_("settings.import_layout"));
+		m_importLayoutBtn.addClickedCallback(
+			[this](lv_event_t*)
+			{
+				auto usbRoot = Layout::findMountedUsbDrive();
+				if (!usbRoot)
+				{
+					HomeView::instance().getPresenter()->newResponse(ResponseType::ERROR, _("settings.no_usb_drive"));
+					return;
+				}
+				m_importCandidates = Layout::findImportableLayoutsOnUsb(*usbRoot);
+				if (m_importCandidates.empty())
+				{
+					HomeView::instance().getPresenter()->newResponse(ResponseType::ERROR,
+																	  _("settings.no_importable_layouts"));
+					return;
+				}
+				m_importPicker.setEntries(m_importCandidates);
+				m_importPicker.setSelectedCallback(
+					[this](size_t index)
+					{
+						if (index >= m_importCandidates.size())
+						{
+							LOG_ERROR("Invalid import candidate index: {:d}", index);
+							return;
+						}
+						Layout::saveCustomLayoutDocument(m_importCandidates[index].doc);
+						StorageHelper::setData(ID_LAYOUT_FILE, Layout::CUSTOM_LAYOUT_SENTINEL);
+						HomeView::instance().getDashboard().reload();
+						m_importPicker.close();
+						HomeView::instance().getPresenter()->newResponse(ResponseType::SUCCESS,
+																		  _("settings.import_layout_succeeded"));
+					});
+				m_importPicker.open();
+			});
 	}
 
 	void DisplaySettings::updateThemePreview()
