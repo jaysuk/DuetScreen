@@ -5,6 +5,7 @@
  *      Author: Jay S
  */
 
+#include "UI/Layout/DashboardWidgets.h"
 #include "UI/Layout/LayoutFileTransfer.h"
 #include "test_utils/TestSuite.h"
 #include <filesystem>
@@ -36,6 +37,12 @@ class TestLayoutFileTransfer : public TestSuite
   protected:
 	void SetUp() override
 	{
+		// LayoutBuilder::validate() (used internally by findImportableLayoutsOnUsb()) checks widget
+		// ids against the real WidgetRegistry::get() singleton - normally populated by Dashboard's
+		// constructor, which this plain (non-UI) test never runs. registerDashboardWidgets() is
+		// idempotent (see TestDashboardWidgets) and only registers descriptors/factories, not live
+		// LVGL widgets, so it's safe to call without a UI context.
+		UI::Layout::registerDashboardWidgets();
 		m_dir = std::filesystem::temp_directory_path() / "duetscreen_layout_transfer_test";
 		std::filesystem::remove_all(m_dir);
 		std::filesystem::create_directories(m_dir);
