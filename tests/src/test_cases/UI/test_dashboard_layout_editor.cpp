@@ -66,16 +66,16 @@ TEST_F(TestDashboardLayoutEditor, ToolbarAndChromeStayOnTopAfterAMutationTrigger
 	// hidden to visible, not on every subsequent rebuild while already visible.
 	//
 	// Exercises the real path end to end: tapping tool_list's own remove button (a real chrome
-	// child, named "<editor name>_remove") the same way a finger would, which internally runs
-	// removeWidget -> validate -> previewDocument -> rebuildChrome - not previewDocument() called
-	// directly, which would skip rebuildChrome() entirely and prove nothing about this bug.
+	// child, named "remove") the same way a finger would, which internally runs removeWidget ->
+	// validate -> previewDocument -> rebuildChrome - not previewDocument() called directly, which
+	// would skip rebuildChrome() entirely and prove nothing about this bug.
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
 	Dashboard dashboard("dashboard", screen);
 	dashboard.enterEditMode();
 
 	ToolList* toolList = dashboard.getToolList();
 	ASSERT_NE(toolList, nullptr);
-	LvObj* removeBtn = toolList->getChildByName("layout_editor_remove");
+	LvObj* removeBtn = toolList->getChildByName("remove");
 	ASSERT_NE(removeBtn, nullptr);
 	removeBtn->sendEvent(LV_EVENT_CLICKED, nullptr);
 

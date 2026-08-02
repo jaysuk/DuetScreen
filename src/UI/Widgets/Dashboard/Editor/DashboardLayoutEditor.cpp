@@ -153,7 +153,12 @@ namespace UI
 			{
 				// A widget inside a tabs/row/column container: removable, but drag/resize are
 				// grid-cell concepts that don't apply here (see the class comment).
-				auto removeBtn = std::make_unique<Button>(fmt::format("{}_remove", getName()), *obj);
+				// A fixed literal name, not one derived from getName(): in DEBUG builds LvObj::getName()
+				// returns the *full dotted ancestor path* (see LvObj.cpp's constructor), not just this
+				// editor's own local name, which would embed extra dots into the button's LVGL-level
+				// name and break getChildByName()'s path-segment matching. A plain "remove" is unique
+				// enough here since it's this widget's *own* single remove button, not a sibling set.
+				auto removeBtn = std::make_unique<Button>("remove", *obj);
 				removeBtn->setFlag(LV_OBJ_FLAG_FLOATING, true);
 				removeBtn->setAlign(LV_ALIGN_TOP_RIGHT, 0, 0);
 				removeBtn->setIcon("close.png");
@@ -178,7 +183,8 @@ namespace UI
 			// A container placed as a grid cell (e.g. the "tabs" container in default.json) is
 			// removable as a unit, same as a widget would be - just without drag/resize, which this
 			// module only supports for widgets (see LayoutDocumentEditor::moveWidget/resizeWidget).
-			auto removeBtn = std::make_unique<Button>(fmt::format("{}_remove", getName()), *obj);
+			// Fixed literal name, not getName() - see the other addChromeForNode remove button above.
+			auto removeBtn = std::make_unique<Button>("remove", *obj);
 			removeBtn->setFlag(LV_OBJ_FLAG_FLOATING, true);
 			removeBtn->setAlign(LV_ALIGN_TOP_RIGHT, 0, 0);
 			removeBtn->setIcon("close.png");
@@ -247,7 +253,12 @@ namespace UI
 		widget.addStyle(Themes::getLvglStyles().border_highlight);
 		m_gridCellTargets.emplace_back(&widget, node.value("col", 0), node.value("row", 0));
 
-		auto dragBtn = std::make_unique<Button>(fmt::format("{}_drag", getName()), widget);
+		// Fixed literal names, not getName(): in DEBUG builds LvObj::getName() returns the *full
+		// dotted ancestor path* (see LvObj.cpp's constructor), not just this editor's own local name,
+		// which would embed extra dots into a button's LVGL-level name and break
+		// getChildByName()'s path-segment matching. A plain literal is unique enough here since each
+		// is this widget's *own* single drag/remove/resize button, not a sibling set.
+		auto dragBtn = std::make_unique<Button>("drag", widget);
 		dragBtn->setFlag(LV_OBJ_FLAG_FLOATING, true);
 		dragBtn->setAlign(LV_ALIGN_TOP_LEFT, 0, 0);
 		dragBtn->setIcon("move.png");
@@ -275,7 +286,7 @@ namespace UI
 			},
 			LV_EVENT_ALL);
 
-		auto removeBtn = std::make_unique<Button>(fmt::format("{}_remove", getName()), widget);
+		auto removeBtn = std::make_unique<Button>("remove", widget);
 		removeBtn->setFlag(LV_OBJ_FLAG_FLOATING, true);
 		removeBtn->setAlign(LV_ALIGN_TOP_RIGHT, 0, 0);
 		removeBtn->setIcon("close.png");
@@ -283,7 +294,7 @@ namespace UI
 		removeBtn->addClickedCallback([this, widgetPath](lv_event_t*)
 									  { applyMutation(Layout::removeWidget(m_workingDoc, widgetPath)); });
 
-		auto resizeBtn = std::make_unique<Button>(fmt::format("{}_resize", getName()), widget);
+		auto resizeBtn = std::make_unique<Button>("resize", widget);
 		resizeBtn->setFlag(LV_OBJ_FLAG_FLOATING, true);
 		resizeBtn->setAlign(LV_ALIGN_BOTTOM_RIGHT, 0, 0);
 		resizeBtn->setIcon("move.png");
@@ -318,8 +329,11 @@ namespace UI
 	void DashboardLayoutEditor::addEmptyCellButton(LvObj& grid, const std::string& gridPath, int col, int row)
 	{
 		ZoneScoped;
-		auto button =
-			std::make_unique<Button>(fmt::format("{}_add_{}_{}", getName(), col, row), grid, _("layout_editor.add"));
+		// "add_<col>_<row>", not getName()-prefixed: in DEBUG builds LvObj::getName() returns the
+		// full dotted ancestor path, which would embed extra dots into the LVGL-level name and break
+		// getChildByName()'s path-segment matching. col/row is enough to keep these unique among
+		// sibling "+" buttons within the same grid.
+		auto button = std::make_unique<Button>(fmt::format("add_{}_{}", col, row), grid, _("layout_editor.add"));
 		Button* raw = button.get();
 		// A real grid child (not a floating overlay) at exactly this cell, so LVGL's own track
 		// resolution positions it correctly - the same mechanism LayoutBuilder uses for real widgets,
