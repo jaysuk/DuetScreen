@@ -82,6 +82,7 @@ namespace UI
 		m_active = true;
 		m_workingDoc = m_dashboard.getCurrentDocument();
 		show();
+		moveToFront();
 		rebuildChrome();
 	}
 
@@ -112,6 +113,15 @@ namespace UI
 	void DashboardLayoutEditor::rebuildChrome()
 	{
 		ZoneScoped;
+		// Dashboard::previewDocument() (called by every applyMutation()) rebuilds the dashboard's
+		// entire widget tree as *new* children of Dashboard, added after this editor's own container -
+		// which was only added once, when edit mode was first entered. Left alone, the freshly-rebuilt
+		// dashboard content silently buries this container (and its toolbar/modals) after the very
+		// first mutation, even though `show()` already brought it to the front once: show()'s
+		// move-to-front only runs while the object is transitioning from hidden to visible, and this
+		// container stays continuously visible for the whole edit session. moveToFront() has no such
+		// guard, so it's what actually needs calling here, every time.
+		moveToFront();
 		clearChrome();
 		if (!m_workingDoc.contains("root"))
 		{

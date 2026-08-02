@@ -55,6 +55,26 @@ TEST_F(TestDashboardLayoutEditor, SavedCustomLayoutRoundTripsThroughTheSentinel)
 	EXPECT_TRUE(dashboard.getToolList()->isValid());
 }
 
+TEST_F(TestDashboardLayoutEditor, ToolbarAndChromeStayOnTopAfterAMutationTriggeredRebuild)
+{
+	// Regression test: found on real hardware, not caught by
+	// EnterEditModeShowsToolbarAndExitRestoresPersistedLayout's screenshot, since that one only
+	// checks the editor's very first render, before any mutation. Every applyMutation() rebuilds the
+	// dashboard's entire widget tree as *new* children of Dashboard, added after the editor's own
+	// (already-existing) container - which silently buried its toolbar and the widget-picker modal
+	// underneath the fresh content, since show()'s move-to-front only fires while transitioning from
+	// hidden to visible, not on every subsequent rebuild while already visible.
+	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
+	Dashboard dashboard("dashboard", screen);
+	dashboard.enterEditMode();
+
+	// previewDocument() with the *same* document is exactly what a real mutation's rebuild does
+	// (LayoutBuilder::build() re-creates every widget from scratch) - no need to actually perform a
+	// move/resize/add/remove to reproduce the bug, since it's the rebuild itself that's at fault.
+	ASSERT_TRUE(dashboard.previewDocument(dashboard.getCurrentDocument()));
+	EXPECT_EQUAL_SCREENSHOT("dashboard_layout_editor/after_rebuild.png");
+}
+
 TEST_F(TestDashboardLayoutEditor, ResetToDefaultReplacesTheWorkingDocumentWithDefaultJson)
 {
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("minimal.json"));
