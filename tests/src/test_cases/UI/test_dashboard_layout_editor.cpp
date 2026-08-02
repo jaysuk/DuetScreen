@@ -64,14 +64,24 @@ TEST_F(TestDashboardLayoutEditor, ToolbarAndChromeStayOnTopAfterAMutationTrigger
 	// (already-existing) container - which silently buried its toolbar and the widget-picker modal
 	// underneath the fresh content, since show()'s move-to-front only fires while transitioning from
 	// hidden to visible, not on every subsequent rebuild while already visible.
+	//
+	// Exercises the real path end to end: tapping tool_list's own remove button (a real chrome
+	// child, named "<editor name>_remove") the same way a finger would, which internally runs
+	// removeWidget -> validate -> previewDocument -> rebuildChrome - not previewDocument() called
+	// directly, which would skip rebuildChrome() entirely and prove nothing about this bug.
 	StorageHelper::setData(ID_LAYOUT_FILE, std::string_view("default.json"));
 	Dashboard dashboard("dashboard", screen);
 	dashboard.enterEditMode();
 
-	// previewDocument() with the *same* document is exactly what a real mutation's rebuild does
-	// (LayoutBuilder::build() re-creates every widget from scratch) - no need to actually perform a
-	// move/resize/add/remove to reproduce the bug, since it's the rebuild itself that's at fault.
-	ASSERT_TRUE(dashboard.previewDocument(dashboard.getCurrentDocument()));
+	ToolList* toolList = dashboard.getToolList();
+	ASSERT_NE(toolList, nullptr);
+	LvObj* removeBtn = toolList->getChildByName("layout_editor_remove");
+	ASSERT_NE(removeBtn, nullptr);
+	removeBtn->sendEvent(LV_EVENT_CLICKED, nullptr);
+
+	// tool_list should now be gone (removed), and the toolbar must still be visible on top - not
+	// buried under the rebuilt dashboard content.
+	EXPECT_EQ(dashboard.getToolList(), nullptr);
 	EXPECT_EQUAL_SCREENSHOT("dashboard_layout_editor/after_rebuild.png");
 }
 
