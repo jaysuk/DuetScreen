@@ -11,9 +11,9 @@
 #include "UI/Layout/LayoutBuilder.h"
 #include <algorithm>
 #include <chrono>
-#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fstream>
+#include <ctime>
 
 namespace UI::Layout
 {
@@ -33,7 +33,11 @@ namespace UI::Layout
 		std::string timestampSuffix()
 		{
 			const std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			return fmt::format("{:%Y%m%d-%H%M%S}", fmt::localtime(t));
+			std::tm tm{};
+			localtime_r(&t, &tm);
+			char buf[32];
+			std::strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &tm);
+			return buf;
 		}
 	} // namespace
 
